@@ -50,8 +50,7 @@ Where **Intervention** is categorical (e.g., 0 = no intervention and 1 = interve
 
 $$Y_i = \beta_0 + \beta_1X_{1i} + \beta_2X_{2i} + ... +  \epsilon_i$$
 
-Where $\beta_1, \beta_2, \dots$ = regression coefficients
-and $X_{1i}, X_{2i}, \dots$ = predictors for observation $i$
+Where $\beta_1, \beta_2, \dots$ = regression coefficients and $X_{1i}, X_{2i}, \dots$ = predictors for observation $i$
 
 **An example:**
 
@@ -75,7 +74,7 @@ Selecting variables based solely on statistical significance is **a mindless app
 It depends on the the **causal relationships** between variables and the **research goal**
 :::
 
-# Relationships between variables
+## Relationships between variables
 
 ```{r}
 smoking_ca_dag <- ggdag::dagify(cardiacarrest ~ cholesterol,
@@ -160,18 +159,12 @@ ggdag(our_dag,
 
 set.seed(1234)
 
-data <- data.frame(
-  sleep_time = rnorm(100, 10, 2),
-  study_time = rnorm(100, 3, 3)
-) |>
-  dplyr::mutate(
-    grades =
-      7 +
-      0.4 * sleep_time +
-      0.7 * study_time +
-      rnorm(100, 0, 3)
-  )
+# Simulate data
+data <- data.frame(sleep_time = rnorm(100, 10, 2),
+                   study_time = rnorm(100, 3, 3)) |>
+  mutate(grades = 7 + 0.4 * sleep_time + 0.7 * study_time + rnorm(100, 0, 3))
 
+# Display first 4 rows, round to 2 decimals
 head(data, 4) |> 
   flextable() |> 
   colformat_double(j = c(1:3), digits = 2)
@@ -232,7 +225,7 @@ ggdag(our_dag,
       use_labels = "label") + theme_void()
 ```
 
-# Direct, Indirect and Total Effects
+## Direct, Indirect and Total Effects
 
 **Direct effect**
 
