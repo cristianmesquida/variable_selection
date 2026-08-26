@@ -1,0 +1,594 @@
+---
+title: "Multiple Regression I"
+subtitle: "Variable Selection"
+author: "Cristian Mesquida"
+institute: "Eindhoven University of Technology"
+date: today
+format: revealjs
+progress: true
+bibliography: references.bib
+nocite: |
+ @*
+editor: visual
+---
+
+```{r packages}
+#| include: false
+
+library(dplyr)
+library(ggplot2)
+library(broom)
+library(ggdag)
+library(flextable)
+```
+
+## Abstract
+
+This lecture introduces **variable selection in multiple regression**, with a focus on choosing predictors based on the research question. It first introduces **Directed Acyclic Graphs (DAGs)** and shows how they can help identify potential **confounders** and avoid inappropriate adjustment for **mediators** and **colliders**. Finally, it distinguishes **confirmatory research from exploratory research and prediction** and discusses how variable selection differs depending on the goal of the analysis.
+
+```{r setup}
+#| include: false
+
+set_flextable_defaults(
+  font.size = 20
+)
+```
+
+## Simple regression
+
+$$Y_i = \beta_0 + \beta_1X_{1i} + \epsilon_i $$
+
+Where $Y_i$ = observed outcome, $\beta_0$ = intercept, $\beta_1$ = regression coefficient, $X_{1i}$ = predictor and $\epsilon_i$ = error term for observation $i$
+
+**An example:**
+
+$$Grade_i = \beta_0 + \beta_1 \times Intervention + \epsilon_i $$
+
+Where **Intervention** is categorical (e.g., 0 = no intervention and 1 = intervention)
+
+## Multiple regression
+
+$$Y_i = \beta_0 + \beta_1X_{1i} + \beta_2X_{2i} + ... +  \epsilon_i$$
+
+Where $\beta_1, \beta_2, \dots$ = regression coefficients
+and $X_{1i}, X_{2i}, \dots$ = predictors for observation $i$
+
+**An example:**
+
+$$Grade_i = \beta_0 + 
+\beta_1  \text{Intervention} + 
+\beta_2  \text{Sleep_time} + 
+\beta_3 \text{Study_time} + 
+\epsilon $$
+
+Where **Intervention** is categorical (e.g., 0 = no intervention and 1 = intervention) and **Sleep_time** and **Study_time** are continuous variables
+
+## What variables should we include in the statistical model?
+
+::: {.fragment .fade-in-then-out}
+**Not** based on whether $p < 0.05$!
+
+Selecting variables based solely on statistical significance is **a mindless approach** and should be avoided.
+:::
+
+::: {.fragment .fade-up}
+It depends on the the **causal relationships** between variables and the **research goal**
+:::
+
+# Relationships between variables
+
+```{r}
+smoking_ca_dag <- ggdag::dagify(cardiacarrest ~ cholesterol,
+                                cholesterol ~ smoking + weight,
+                                smoking ~ unhealthy,
+                                weight ~ unhealthy,
+                                labels = c("cardiacarrest" = "Cardiac\n Arrest", 
+                                           "smoking" = "Smoking",
+                                           "cholesterol" = "Cholesterol",
+                                           "unhealthy" = "Unhealthy\n Lifestyle",
+                                           "weight" = "Weight")
+                                )
+
+ggdag(smoking_ca_dag, 
+      text = FALSE,  
+      use_labels = "label") + 
+  theme_void()
+```
+
+## Direct Acyclic Graph (DAG)
+
+- DAGs consist of **variables (nodes)** and **arrows (edges)**
+
+- Nodes can represent treatments, exposures, outcomes, or other characteristics
+
+- Arrows represent **known or hypothesised causal relationships** between variables
+
+## Direct Acyclic Graph (DAG)
+
+DAGs depict an investigator’s hypotheses or assumptions about:
+
+- how variables are causally related
+
+- how an exposure/intervention affects an outcome
+
+- which variables should be controlled for (in other words, \*\*DAGs can inform statistical analysis\*\*)
+
+## Types of variables
+
+When deciding which variables to include in a regression model, it is important to distinguish between:
+
+- **Predictors**
+
+- **Mediators**
+
+- **Confounders**
+
+- **Colliders**
+
+These variables have very different implications for statistical adjustment.
+
+## Predictors
+
+- A predictor ($X$) is a variable included in the model to explain the outcome ($Y$)
+
+## Predictors in a DAG
+
+```{r}
+coord_dag <- list(
+  x = c(X1 = 0, X2 = 0, Y = 2),
+  y = c(X1 = 0, X2 = 1, Y = 0)
+)
+
+our_dag <- ggdag::dagify(Y ~ X1,
+                         Y ~ X2,
+                         coords = coord_dag,
+                         labels = c("X1" = "Sleep time",
+                                    "X2" = "Study time",
+                                    "Y" = "Grade")
+                         )
+
+ggdag(our_dag,
+      use_labels = "label") + theme_void()
+```
+
+​This represents: $X1​$ → $Y$ and $X2$ ​→ $Y$
+
+## Simulating predictors
+
+```{r}
+#| echo: TRUE
+
+set.seed(1234)
+
+data <- data.frame(
+  sleep_time = rnorm(100, 10, 2),
+  study_time = rnorm(100, 3, 3)
+) |>
+  dplyr::mutate(
+    grades =
+      7 +
+      0.4 * sleep_time +
+      0.7 * study_time +
+      rnorm(100, 0, 3)
+  )
+
+head(data, 4) |> 
+  flextable() |> 
+  colformat_double(j = c(1:3), digits = 2)
+```
+
+## Regression model
+
+```{r}
+#| echo: TRUE
+
+# Run regression analysis and display output, rounded to 2 decimals
+lm(grades ~ sleep_time + study_time, data = data) |>
+  tidy() |>
+  select(term, estimate, p.value) |>
+  flextable() |>
+  colformat_double(j = c(2, 3), digits = 2) |> 
+  color(i = 2, color = "blue", part = "body") |> 
+  color(i = 3, color = "green", part = "body")
+```
+
+## Interpreting the predictors
+
+> **Sleep time:** Holding study time constant, a one-unit increase in sleep time is associated with a **0.4-unit increase in grades**.
+
+> **Study time:** Holding sleep time constant, a one-unit increase in study time is associated with a **0.7-unit increase in grades**.
+
+## Mediator
+
+A **mediator** is a variable that:
+
+- is influenced by the exposure ($X$)
+
+- influences the outcome ($Y$)
+
+- lies on the causal pathway between X and Y
+
+- controlling for it removes the **mediated effect** from the estimated effect of $X$
+
+## Mediator in a DAG
+
+```{r}
+coord_dag <- list(
+  x = c(X = 0, M = 1, Y = 2),
+  y = c(X = 0, M = 1, Y = 0)
+)
+
+
+our_dag <- dagify(M ~ X,
+                  Y ~ M,
+                  Y ~ X,
+                  coords = coord_dag,
+                  labels = c("M" = "Fast food", 
+                             "X" = "Heavy\n alcohol",
+                             "Y" = "Mortality")
+                  )
+
+ggdag(our_dag, 
+      use_labels = "label") + theme_void()
+```
+
+# Direct, Indirect and Total Effects
+
+**Direct effect**
+
+- The effect of $X$ on $Y$ not through $M$ : $X$ → Y
+
+**Indirect effect**
+
+- The effect of $X$ on $Y$ through $M$: $X$ → $M$ → $Y$
+
+**Total effect**
+
+The overall effect of $X$ on $Y$, combining the direct and indirect effects:
+
+- Total effect = Direct effect + Indirect effect
+
+## Simulating a mediator
+
+```{r}
+#| echo: TRUE
+
+set.seed(1234)
+
+# Simulate data
+data <- data.frame(
+  exposure = rnorm(100)
+) |>
+  mutate(
+    mediator = 0.6 * exposure + rnorm(100, 0, 1),
+    outcome = 0.5 * exposure + 0.7 * mediator + rnorm(100, 0, 1)
+  )
+
+# Display the first 4 observations, rounded to 2 decimals
+head(data, 4) |> 
+  flextable() |> 
+  colformat_double(j = c(1, 2, 3), digits = 2)
+```
+
+## Without controlling for the mediator
+
+```{r}
+#| echo: TRUE
+
+# Run model and display estimates and p-values, rounded to 2 decimals
+lm(outcome ~ exposure, data = data) |> 
+  tidy() |> 
+  select(term, estimate, p.value) |> 
+  flextable() |> 
+  colformat_double(j = c(2, 3), digits = 2)
+```
+
+This estimates the total effect of the exposure. This is the effect of interest when estimating the overall effect of an exposure or intervention.
+
+## Controlling for the mediator
+
+```{r}
+#| echo: TRUE
+
+# Run model and display estimates and p-values, rounded to 2 decimals
+lm(outcome ~ exposure + mediator, data = data) |>
+  tidy() |>
+  select(term, estimate, p.value) |> 
+  flextable() |> 
+  colformat_double(j = c(2, 3), digits = 2) |> 
+  color(i = 2, color = "red", part = "body")
+```
+
+This estimates the direct effect of the exposure (i.e., the effect of $X$ on $Y$ **not through M**).
+
+Conditioning on the mediator blocks the mediated (indirect) effect and can therefore bias estimates of the total effect of $X$ on $Y$
+
+## Confounder
+
+A **confounder** is a variable that:
+
+- is associated with the exposure ($X$)
+- is associated with the outcome ($Y$)
+- is not a consequence of the exposure
+- can lead to biased estimates if not controlled for
+
+## Confounder in a DAG
+
+```{r}
+coord_dag <- list(
+  x = c(X = 0, C = 1, Y = 2),
+  y = c(X = 0, C = 1, Y = 0)
+)
+our_dag <- dagify(X ~ C, 
+                  Y ~ X, 
+                  Y ~ C, 
+                  coords = coord_dag,
+                  labels = c("C" = "SEP*", 
+                             "X" = "Heavy\n alcohol",
+                             "Y" = "Mortality")
+                  )
+
+ggdag(our_dag,
+      use_labels = "label") + theme_void()
+```
+
+\*SEP = socio-economic position
+
+## Confounding in practice
+
+```{r}
+#| echo: TRUE
+
+set.seed(1234)
+
+# Simulate data
+data <- data.frame(
+  covariate = sample(0:1, 100, replace = TRUE)
+) |>
+  dplyr::mutate(
+    exposure = runif(100, 0, 1) + 0.3 * covariate,
+    outcome = 2.0 + 0.5 * exposure + 0.25 * covariate
+  )
+
+# Display first 4 rows, rounded to 2 decimals
+head(data, 4) |> 
+  flextable() |> 
+  colformat_double(j = c(2, 3), digits = 2)
+```
+
+## Without adjusting for the confounder
+
+```{r}
+#| echo: TRUE
+
+# Run model and display estimates and p-values, rounded to 2 decimals
+lm(outcome ~ exposure, data) |> 
+  tidy() |> 
+  select(term, estimate, p.value) |> 
+  flextable() |> 
+  colformat_double(j = c(2, 3), digits = 2) |> 
+  color(i = 2, color = "red", part = "body")
+```
+
+Without adjusting for the confounder, the estimated effect is a biased estimate of the true effect size
+
+## Adjusting for the confounder
+
+```{r}
+#| echo: TRUE
+
+# Run model and display estimates and p-values, rounded to 2 decimals
+lm(outcome ~ exposure + covariate, data) |> 
+  tidy() |> 
+  select(term, estimate, p.value) |> 
+  flextable() |> 
+  colformat_double(j = c(2, 3), digits = 2) |> 
+  color(i = 2, color = "blue", part = "body")
+```
+
+Adjusting for the confounder results in an unbiased estimate of effect of the exposure
+
+## Collider
+
+A **collider** is a variable that:
+
+- is caused by the exposure ($X$)
+
+- is caused by the outcome ($Y$)
+
+- is therefore a common consequence of both the exposure and the outcome
+
+- Controlling for a collider can induce a spurious association between $X$ and $Y$
+
+Collider bias can arise through:
+
+- Study design: sampling, stratification or matching
+
+- Statistical analysis: adjusting for the collider in a regression model
+
+## An example: The Obesity Paradox
+
+- In the general population, higher BMI (above \~30 kg/m²) is generally associated with higher mortality risk
+
+- Previous research investigated whether obesity increase mortality among people with CVD
+
+- However, CVD can act as a collider because both obesity and other causes of mortality can contribute to CVD
+
+- **Conditioning on CVD** (e.g., by stratifying on disease status or by adjusting on multiple regression) can create a spurious association between obesity and mortality
+
+- This can produce the **obesity paradox**: among people with CVD, obesity may appear to be associated with **lower mortality**, despite being associated with higher mortality in the general population
+
+## Collider in a DAG
+
+```{r}
+coord_dag <- list(
+  x = c(X = 0, C = 1, Y = 2),
+  y = c(X = 0, C = 1, Y = 0)
+)
+our_dag <- dagify(C ~ X, 
+                  Y ~ X, 
+                  C ~ Y, 
+                  coords = coord_dag,
+                  labels = c("C" = "CVD",
+                             "X" = "Obesity",
+                             "Y" = "Mortality")
+)
+
+ggdag(our_dag,
+      use_labels = "label") + 
+  theme_void()
+```
+
+\*CVD = Cardiovascular disease
+
+## An example: The Obesity Paradox
+
+| **Analysis** | **RD (95% CI)** |
+|:--------------------------------|:--------------------------------------|
+| Crude | 0.05 (0.03, 0.07) |
+| Adjusted — total population | 0.03 (0.02, 0.05) |
+| [Adjusted — CVD]{style="color:red"} | [−0.12 (−0.20, −0.04)]{style="color:red"} |
+| Adjusted — No CVD | 0.03 (0.01, 0.05) |
+
+: Comparison of the estimated risk difference for the effect of obesity on mortality. Results obtained from @obesity_paradox2015
+
+## Simulating a collider
+
+```{r}
+#| echo: TRUE
+
+set.seed(1234)
+
+# Simulate data
+data <- data.frame(
+  exposure = rnorm(1000),
+  outcome = rnorm(1000)
+) |>
+  mutate(
+    collider = exposure + outcome + rnorm(1000, 0, 0.5)
+  )
+
+# Display first 4 rows, rounded to 2 DECIMALS
+data |> 
+  head(4) |> 
+  flextable() |> 
+  colformat_double(j = c(1, 2, 3), digits = 2)
+```
+
+## No conditioning on a collider
+
+- Exposure and outcome were simulated **independently**.
+
+- Therefore, there is **no true association** between them.
+
+```{r}
+#| echo: TRUE
+#| out-width: 100%
+
+ggplot(data, aes(x = exposure, y = outcome)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "lm", se = FALSE) +
+  theme_classic()
+```
+
+## No adjustement for collider
+
+```{r}
+#| echo: TRUE
+
+# Run model and display estimates and p-values, rounded to 2 decimals
+lm(outcome ~ exposure, data) |> 
+  tidy() |> 
+  select(term, estimate, p.value) |> 
+  flextable() |> 
+  colformat_double(j = c(2, 3), digits = 2) |> 
+  color(i = 2, color = "red", part = "body")
+```
+
+*No* association between exposure and outcome.
+
+## Conditioning on a collider through sampling
+
+```{r}
+#| echo: TRUE
+data |> 
+  filter(collider > 0.2) |>  # Select observations based on the collider
+  ggplot(aes(x = exposure, y = outcome)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "lm", se = FALSE) +
+  theme_classic()
+```
+
+## Adjusting for a collider
+
+```{r}
+#| echo: TRUE
+
+# Run model and display estimates and p-values, rounded to 2 decimals
+lm(outcome ~ exposure + collider, data) |> 
+  tidy() |> 
+  select(term, estimate, p.value) |> 
+  flextable() |> 
+  colformat_double(j = c(2, 3), digits = 2) |> 
+  color(i = 2, color = "red", part = "body")
+```
+
+Controlling for the collider creates a spurious association between exposure and outcome
+
+## Confirmatory research
+
+- Aims to answer a **well-defined, pre-specified question**:\
+  *“Does heavy alcohol consumption increase mortality?”*
+
+- Focuses on estimating or testing a **specific relationship** between variables
+
+- Predictors are selected based on **theory, prior evidence, or causal assumptions**
+
+- When estimating a causal effect, the study design and analysis should account for **confounding** (e.g., through randomization or appropriate adjustment)
+
+- An observational study can be **confirmatory** if the research question, design, and analysis are **pre-specified and appropriately justified**
+
+## Exploratory research
+
+## Exploratory research
+
+- Does not have a **specific pre-specified hypothesis**
+
+- 
+
+  - Research questions often use wording such as:\
+    *“What factors are associated with mortality?”*
+
+- Examines multiple variables to identify **potential associations**
+
+- Findings are **hypothesis-generating** and should be confirmed in future research
+
+- Observational studies can be affected by **unmeasured confounding, unadjusted confounding, and selection bias**
+
+## Prediction
+
+- Asks: “How accurately can we predict $Y$?”
+
+- Aims to build the best-performing model using available predictors
+
+- Uses observed data to make predictions about an outcome
+
+- Focuses on prediction accuracy, rather than estimating causal effects
+
+- The best model is the one that generalizes well to new, unseen data
+
+## Recipe for a good confirmatory study
+
+::: callout-tip
+- **Ask a clear causal question.** Use unambiguous causal language, such as: “Does reducing salt intake prevent strokes?”
+
+- **Prespecify the adjustment strategy.** Base your strategy on existing evidence, substantive knowledge, and explicit assumptions. A **directed acyclic graph (DAG)** can help communicate which variables should—and should not—be adjusted for.
+
+- **Adjust for confounders.** Include the variables needed to block relevant backdoor paths between the exposure and outcome in the regression model.
+
+- **Avoid inappropriate adjustment.** Do not adjust for **mediators** or **colliders**, as this can bias the estimated causal effect.
+:::
+
+## References and further reading
+
+Further reading includes @tutorial_dag2022 and @lewer_2025
