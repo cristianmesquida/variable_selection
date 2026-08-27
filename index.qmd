@@ -10,6 +10,7 @@ bibliography: references.bib
 nocite: |
  @*
 editor: visual
+css: styles.css
 ---
 
 ```{r packages}
@@ -22,10 +23,6 @@ library(ggdag)
 library(flextable)
 ```
 
-## Abstract
-
-This lecture introduces **variable selection in multiple regression**, with a focus on choosing predictors based on the research question. It first introduces **Directed Acyclic Graphs (DAGs)** and shows how they can help identify potential **confounders** and avoid inappropriate adjustment for **mediators** and **colliders**. Finally, it distinguishes **confirmatory research from exploratory research and prediction** and discusses how variable selection differs depending on the goal of the analysis.
-
 ```{r setup}
 #| include: false
 
@@ -33,6 +30,20 @@ set_flextable_defaults(
   font.size = 20
 )
 ```
+
+## Abstract
+
+When conducting a multiple regression, researchers face an important question: **What variables should I include in the model?** This lecture introduces variable selection in multiple regression, with a focus on choosing predictors based on the research question. It first introduces different types of research questions, including causal, associational, and prediction questions. It then introduces Directed Acyclic Graphs (DAGs) and shows how they can help identify potential confounders and avoid inappropriate adjustment for mediators and colliders.
+
+## Lecture's objectives
+
+By the end of this lecture, you should be able to:
+
+- Identify the type of research question (causal, associational or prediction)
+
+- Identify the type of variables (predictors, mediators, confounders and colliders)
+
+- Be familiar with Directed Acyclical Graphs (DAGs) and how they can help identify potential confounders and avoid inappropriate adjustment for mediators and colliders
 
 ## Simple regression
 
@@ -42,7 +53,7 @@ Where $Y_i$ = observed outcome, $\beta_0$ = intercept, $\beta_1$ = regression co
 
 **An example:**
 
-$$Grade_i = \beta_0 + \beta_1 \times Intervention + \epsilon_i $$
+$$\text{cardiac_arrest}_i = \beta_0 + \beta_1  \text{intervention} + \epsilon_i $$
 
 Where **Intervention** is categorical (e.g., 0 = no intervention and 1 = intervention)
 
@@ -50,67 +61,144 @@ Where **Intervention** is categorical (e.g., 0 = no intervention and 1 = interve
 
 $$Y_i = \beta_0 + \beta_1X_{1i} + \beta_2X_{2i} + ... +  \epsilon_i$$
 
-Where $\beta_1, \beta_2, \dots$ = regression coefficients and $X_{1i}, X_{2i}, \dots$ = predictors for observation $i$
+Where $\beta_1, \beta_2, \dots$ = regression coefficients and $X_{1i}, X_{2i}, \dots$ = predictors and and $\epsilon_i$ = error term for observation $i$
 
 **An example:**
 
-$$Grade_i = \beta_0 + 
-\beta_1  \text{Intervention} + 
-\beta_2  \text{Sleep_time} + 
-\beta_3 \text{Study_time} + 
+$$\text{cardiac_arrest}_i = \beta_0 + 
+\beta_1  \text{intervention} + 
+\beta_2  \text{cholesterol} + 
+\beta_3 \text{smoking} + 
 \epsilon $$
 
-Where **Intervention** is categorical (e.g., 0 = no intervention and 1 = intervention) and **Sleep_time** and **Study_time** are continuous variables
+Where **intervention** is categorical (e.g., coded as 0/1) and **cholesterol** and **smoking** are a continuous variable
 
-## What variables should we include in the statistical model?
+## Example
+
+```{r}
+nhefs <- readr::read_csv(
+  "https://vincentarelbundock.github.io/Rdatasets/csv/causaldata/nhefs.csv",
+  show_col_types = FALSE
+)
+```
+
+- Take the `nhefs` dataset as example, which contains data from [The National Health and Nutrition Examination Survey Data I Epidemiologic Follow-up Study (NHEFS)](https://vincentarelbundock.github.io/Rdatasets/articles/data.html).
+
+- The original dataset has `r dim(nhefs)[[1]]` rows and `r dim(nhefs)[[2]]` variables.
+
+- Such a rich dataset allows us to conduct many analyses—but which variables should we include in our model?
+
+```{r}
+#| eval: FALSE
+nhefs |> 
+  select(3:13) |> 
+  slice_head(n = 5) |> 
+  flextable()
+```
+
+## What variables to include in the model?
 
 ::: {.fragment .fade-in-then-out}
-**Not** based on whether $p < 0.05$!
+**Not** based on whether *p* \< 0.05!
 
-Selecting variables based solely on statistical significance is **a mindless approach** and should be avoided.
+Selecting variables based solely on statistical significance is **a mindless approach** and should be avoided
+
+It can increase the number of false positives (Type I error rate)
 :::
 
 ::: {.fragment .fade-up}
-It depends on the the **causal relationships** between variables and the **research goal**
+The answer is that it depends on your **research question**
 :::
 
-## Relationships between variables
+# Research questions
+
+## Causal questions
+
+- Aims to answer a **well-defined, pre-specified question**: *“Does heavy alcohol consumption increase mortality?”*
+
+- Focus on estimating the causal effect of an an intervention/exposure on an outcome
+
+- Variables should be selected based on causal assumptions, theory, and prior evidence
+
+- Confounding needs to be addressed through study design and/or appropriate adjustment
+
+## Causal questions
+
+- Causal questions can be studied using randomised controlled trials (RCTs) or observational studies
+
+- RCTs are generally preferred for establishing causal effects but they can be costly or unethical (e.g., randomly assigning people to smoke to study its effect on lung cancer)
+
+- Observational studies can also support causal inference, but confounding and other sources of bias are important limitations
+
+- Regression analysis is commonly used in observational studies because it can adjust for measured confounders by including them as covariates in the model
+
+## Exploratory /associational questions
+
+- Does not have a **specific pre-specified hypothesis**
+
+- Research questions often use wording such as:*“What factors are associated with mortality?”*
+
+- Examines multiple variables to identify **potential associations**
+
+- Findings are **hypothesis-generating** and should be confirmed in future research
+
+- This type of study can suffer from confounding and other source of bias, so causal claims should be avoided
+
+## Prediction questions
+
+- Asks: “How accurately can we predict risk of mortality in patients suffering from metabolic syndrome?”
+
+- Aims to build the best-performing model using available predictors
+
+- Uses observed data to make predictions about an outcome
+
+- Focuses on prediction accuracy, rather than estimating causal effects
+
+- The best model is the one that generalizes well to new, unseen data
+
+## Causal questions and DAGs
 
 ```{r}
-smoking_ca_dag <- ggdag::dagify(cardiacarrest ~ cholesterol,
-                                cholesterol ~ smoking + weight,
-                                smoking ~ unhealthy,
-                                weight ~ unhealthy,
-                                labels = c("cardiacarrest" = "Cardiac\n Arrest", 
-                                           "smoking" = "Smoking",
-                                           "cholesterol" = "Cholesterol",
-                                           "unhealthy" = "Unhealthy\n Lifestyle",
-                                           "weight" = "Weight")
-                                )
+dag <- dagify(
+  bp ~ obesity + sep + exercise,
+  obesity ~ exercise,
+  hospialization ~ exercise + bp,
+  exercise ~ sep,
+  
+  labels = c(
+    "bp" = "Blood\n Pressure",
+    "obesity" = "Obesity",
+    "sep" = "SEP",
+    "hospialization" = "Hospialization",
+    "exercise" = "Physical\n Activity"
+  )
+)
 
-ggdag(smoking_ca_dag, 
-      text = FALSE,  
-      use_labels = "label") + 
+ggdag(
+  dag,
+  text = FALSE,
+  use_labels = "label"
+) +
   theme_void()
 ```
 
-## Direct Acyclic Graph (DAG)
+## Directed Acyclic Graph (DAG)
 
 - DAGs consist of **variables (nodes)** and **arrows (edges)**
 
-- Nodes can represent treatments, exposures, outcomes, or other characteristics
+- Nodes can represent interventions, exposures, outcomes, or other characteristics
 
 - Arrows represent **known or hypothesised causal relationships** between variables
 
-## Direct Acyclic Graph (DAG)
+## Directed Acyclic Graph (DAG)
 
 DAGs depict an investigator’s hypotheses or assumptions about:
 
 - how variables are causally related
 
-- how an exposure/intervention affects an outcome
+- how an intervention/exposure affects an outcome
 
-- which variables should be controlled for (in other words, \*\*DAGs can inform statistical analysis\*\*)
+- which variables should be adjusted for (in other words, **DAGs can inform statistical analysis**)
 
 ## Types of variables
 
@@ -141,16 +229,14 @@ coord_dag <- list(
 our_dag <- ggdag::dagify(Y ~ X1,
                          Y ~ X2,
                          coords = coord_dag,
-                         labels = c("X1" = "Sleep time",
-                                    "X2" = "Study time",
-                                    "Y" = "Grade")
+                         labels = c("X1" = "Physical\n Activity",
+                                    "X2" = "Food\n Intake",
+                                    "Y" = "Blood\n Pressure")
                          )
 
 ggdag(our_dag,
       use_labels = "label") + theme_void()
 ```
-
-​This represents: $X1​$ → $Y$ and $X2$ ​→ $Y$
 
 ## Simulating predictors
 
@@ -160,9 +246,9 @@ ggdag(our_dag,
 set.seed(1234)
 
 # Simulate data
-data <- data.frame(sleep_time = rnorm(100, 10, 2),
-                   study_time = rnorm(100, 3, 3)) |>
-  mutate(grades = 7 + 0.4 * sleep_time + 0.7 * study_time + rnorm(100, 0, 3))
+data <- data.frame(food_intake = rnorm(200, 10, 2),
+                   exercise = rnorm(200, 3, 3)) |>
+  mutate(blood_pressure = 7 + 0.4 * food_intake + 0.7 * exercise + rnorm(200, 0, 3))
 
 # Display first 4 rows, round to 2 decimals
 head(data, 4) |> 
@@ -176,7 +262,7 @@ head(data, 4) |>
 #| echo: TRUE
 
 # Run regression analysis and display output, rounded to 2 decimals
-lm(grades ~ sleep_time + study_time, data = data) |>
+lm(blood_pressure ~ food_intake + exercise, data = data) |>
   tidy() |>
   select(term, estimate, p.value) |>
   flextable() |>
@@ -187,9 +273,9 @@ lm(grades ~ sleep_time + study_time, data = data) |>
 
 ## Interpreting the predictors
 
-> **Sleep time:** Holding study time constant, a one-unit increase in sleep time is associated with a **0.4-unit increase in grades**.
+> **Food intake:** Holding `exercise` constant, a one-unit increase in diet is associated with a **0.4-unit increase in blood pressure**.
 
-> **Study time:** Holding sleep time constant, a one-unit increase in study time is associated with a **0.7-unit increase in grades**.
+> **Exercise:** Holding `food_intake` constant, a one-unit increase in `exercise` is associated with a **0.7-unit increase in blood pressure**.
 
 ## Mediator
 
@@ -201,7 +287,7 @@ A **mediator** is a variable that:
 
 - lies on the causal pathway between X and Y
 
-- controlling for it removes the **mediated effect** from the estimated effect of $X$
+- adjusting for it removes the **mediated effect** from the estimated effect of $X$
 
 ## Mediator in a DAG
 
@@ -250,11 +336,11 @@ set.seed(1234)
 
 # Simulate data
 data <- data.frame(
-  exposure = rnorm(100)
+  exposure = rnorm(200)
 ) |>
   mutate(
-    mediator = 0.6 * exposure + rnorm(100, 0, 1),
-    outcome = 0.5 * exposure + 0.7 * mediator + rnorm(100, 0, 1)
+    mediator = 0.6 * exposure + rnorm(200, 0, 1),
+    outcome = 0.5 * exposure + 0.7 * mediator + rnorm(200, 0, 1)
   )
 
 # Display the first 4 observations, rounded to 2 decimals
@@ -263,7 +349,7 @@ head(data, 4) |>
   colformat_double(j = c(1, 2, 3), digits = 2)
 ```
 
-## Without controlling for the mediator
+## Without adjustment regression of the mediator
 
 ```{r}
 #| echo: TRUE
@@ -273,12 +359,13 @@ lm(outcome ~ exposure, data = data) |>
   tidy() |> 
   select(term, estimate, p.value) |> 
   flextable() |> 
-  colformat_double(j = c(2, 3), digits = 2)
+  colformat_double(j = c(2, 3), digits = 2) |> 
+  color(i = 2, color = "green", part = "body")
 ```
 
 This estimates the total effect of the exposure. This is the effect of interest when estimating the overall effect of an exposure or intervention.
 
-## Controlling for the mediator
+## With adjustment regression of the mediator
 
 ```{r}
 #| echo: TRUE
@@ -294,7 +381,7 @@ lm(outcome ~ exposure + mediator, data = data) |>
 
 This estimates the direct effect of the exposure (i.e., the effect of $X$ on $Y$ **not through M**).
 
-Conditioning on the mediator blocks the mediated (indirect) effect and can therefore bias estimates of the total effect of $X$ on $Y$
+Adjusting for the mediator blocks the pathway $X$ → $M$ → $Y$, so the model no longer estimates the total effect of $X$ on $Y$.
 
 ## Confounder
 
@@ -303,7 +390,7 @@ A **confounder** is a variable that:
 - is associated with the exposure ($X$)
 - is associated with the outcome ($Y$)
 - is not a consequence of the exposure
-- can lead to biased estimates if not controlled for
+- can lead to biased estimates if not adjusted for
 
 ## Confounder in a DAG
 
@@ -349,7 +436,7 @@ head(data, 4) |>
   colformat_double(j = c(2, 3), digits = 2)
 ```
 
-## Without adjusting for the confounder
+## Without adjustment regression of the confounder
 
 ```{r}
 #| echo: TRUE
@@ -365,7 +452,7 @@ lm(outcome ~ exposure, data) |>
 
 Without adjusting for the confounder, the estimated effect is a biased estimate of the true effect size
 
-## Adjusting for the confounder
+## With regression adjustment of the confounder
 
 ```{r}
 #| echo: TRUE
@@ -391,7 +478,9 @@ A **collider** is a variable that:
 
 - is therefore a common consequence of both the exposure and the outcome
 
-- Controlling for a collider can induce a spurious association between $X$ and $Y$
+- Adjusting for a collider can induce a spurious association between $X$ and $Y$
+
+## 
 
 Collider bias can arise through:
 
@@ -401,15 +490,15 @@ Collider bias can arise through:
 
 ## An example: The Obesity Paradox
 
-- In the general population, higher BMI (above \~30 kg/m²) is generally associated with higher mortality risk
+- In the general population, the higher the body mass index higher the mortality risk
 
-- Previous research investigated whether obesity increase mortality among people with CVD
+- Previous research investigated whether obesity increase mortality among people with cardiovascular disease (CVD)
 
 - However, CVD can act as a collider because both obesity and other causes of mortality can contribute to CVD
 
-- **Conditioning on CVD** (e.g., by stratifying on disease status or by adjusting on multiple regression) can create a spurious association between obesity and mortality
+- **Conditioning on CVD** (e.g., by stratifying on disease status or by adjusting on multiple regression) can create the **obesity paradox**
 
-- This can produce the **obesity paradox**: among people with CVD, obesity may appear to be associated with **lower mortality**, despite being associated with higher mortality in the general population
+- **Obesity paradox:** among people with CVD, obesity may appear to be associated with lower mortality, despite being associated with higher mortality in the general population
 
 ## Collider in a DAG
 
@@ -434,7 +523,7 @@ ggdag(our_dag,
 
 \*CVD = Cardiovascular disease
 
-## An example: The Obesity Paradox
+## The Obesity Paradox
 
 | **Analysis** | **RD (95% CI)** |
 |:--------------------------------|:--------------------------------------|
@@ -484,7 +573,7 @@ ggplot(data, aes(x = exposure, y = outcome)) +
   theme_classic()
 ```
 
-## No adjustement for collider
+## Without regression adjustment of the collider
 
 ```{r}
 #| echo: TRUE
@@ -512,7 +601,7 @@ data |>
   theme_classic()
 ```
 
-## Adjusting for a collider
+## With regression adjustment of the collider
 
 ```{r}
 #| echo: TRUE
@@ -526,49 +615,7 @@ lm(outcome ~ exposure + collider, data) |>
   color(i = 2, color = "red", part = "body")
 ```
 
-Controlling for the collider creates a spurious association between exposure and outcome
-
-## Confirmatory research
-
-- Aims to answer a **well-defined, pre-specified question**:\
-  *“Does heavy alcohol consumption increase mortality?”*
-
-- Focuses on estimating or testing a **specific relationship** between variables
-
-- Predictors are selected based on **theory, prior evidence, or causal assumptions**
-
-- When estimating a causal effect, the study design and analysis should account for **confounding** (e.g., through randomization or appropriate adjustment)
-
-- An observational study can be **confirmatory** if the research question, design, and analysis are **pre-specified and appropriately justified**
-
-## Exploratory research
-
-## Exploratory research
-
-- Does not have a **specific pre-specified hypothesis**
-
-- 
-
-  - Research questions often use wording such as:\
-    *“What factors are associated with mortality?”*
-
-- Examines multiple variables to identify **potential associations**
-
-- Findings are **hypothesis-generating** and should be confirmed in future research
-
-- Observational studies can be affected by **unmeasured confounding, unadjusted confounding, and selection bias**
-
-## Prediction
-
-- Asks: “How accurately can we predict $Y$?”
-
-- Aims to build the best-performing model using available predictors
-
-- Uses observed data to make predictions about an outcome
-
-- Focuses on prediction accuracy, rather than estimating causal effects
-
-- The best model is the one that generalizes well to new, unseen data
+Adjusting for the collider creates a spurious association between exposure and outcome
 
 ## Recipe for a good confirmatory study
 
@@ -577,7 +624,7 @@ Controlling for the collider creates a spurious association between exposure and
 
 - **Prespecify the adjustment strategy.** Base your strategy on existing evidence, substantive knowledge, and explicit assumptions. A **directed acyclic graph (DAG)** can help communicate which variables should—and should not—be adjusted for.
 
-- **Adjust for confounders.** Include the variables needed to block relevant backdoor paths between the exposure and outcome in the regression model.
+- **Regression adjustment of confounders.** Include the variables needed to block relevant backdoor paths between the exposure and outcome in the regression model.
 
 - **Avoid inappropriate adjustment.** Do not adjust for **mediators** or **colliders**, as this can bias the estimated causal effect.
 :::
