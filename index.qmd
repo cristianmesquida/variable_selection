@@ -437,9 +437,7 @@ lm(outcome ~ exposure + mediator, data = data) |>
   color(i = 2, color = "red", part = "body")
 ```
 
-This estimates the direct effect of the exposure (i.e., the effect of $X$ on $Y$ **not through M**).
-
-Adjusting for the mediator blocks the pathway $X$ → $M$ → $Y$, so the model no longer estimates the total effect of $X$ on $Y$.
+This estimates the direct effect of the exposure (i.e., the effect of $X$ on $Y$ **not through M**). Adjusting for the mediator blocks the pathway $X$ → $M$ → $Y$, so the model no longer estimates the total effect of $X$ on $Y$.
 
 ## Confounder
 
