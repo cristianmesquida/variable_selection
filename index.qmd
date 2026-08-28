@@ -1,8 +1,8 @@
 ---
-title: "Multiple Regression I"
-subtitle: "Variable Selection"
-author: "Cristian Mesquida"
+title: "Multiple Regression I: Variable Selection"
+subtitle: "Behavioral Research Methods 2"
 institute: "Eindhoven University of Technology"
+author: "Cristian Mesquida"
 date: today
 format: revealjs
 slide-number: true
@@ -85,7 +85,7 @@ $$\text{blood_pressure}_i = \beta_0 +
 
 Where **exercise** is categorical (e.g., coded as 0/1) and **cholesterol** and **age** are a continuous variable
 
-## Example
+## You are a researcher
 
 ```{r}
 nhefs <- readr::read_csv(
@@ -100,15 +100,20 @@ nhefs <- readr::read_csv(
 
 - The original dataset has `r dim(nhefs)[[1]]` rows and `r dim(nhefs)[[2]]` variables.
 
-- Such a rich dataset allows us to conduct many analyses—but which variables should we include in our model?
+## `nhefs` dataset
 
+- Your job is to answer the question: Which variables explain systolic blood pressure (`sbp`)?
+
+- Which variables should we include in our model?
+
+::: scrollable
 ```{r}
-#| eval: FALSE
 nhefs |> 
-  select(3:13) |> 
   slice_head(n = 5) |> 
-  flextable()
+  flextable() |> 
+  color(j = 8, color = "blue", part = "all")
 ```
+:::
 
 ## What variables to include in the model?
 
@@ -124,7 +129,7 @@ It can increase the number of false positives (Type I error rate)
 The answer is that it depends on your **research question**
 :::
 
-# Research questions
+# Types of research questions
 
 ## Causal questions
 
@@ -145,6 +150,45 @@ The answer is that it depends on your **research question**
 - Observational studies can also support causal inference, but confounding and other sources of bias are important limitations
 
 - Regression analysis is commonly used in observational studies because it can adjust for measured confounders by including them as covariates in the model
+
+## A side note on **confounders**
+
+- The fact that a dataset like `nhefs` contains many variables does not mean that all of the confounders have been measured
+
+```{r}
+
+confounders <- tibble::tibble(
+  `Type of confounder` = c(
+    "Measured",
+    "Unmeasured but measurable",
+    "Unmeasurable"
+  ),
+  Examples = c(
+    "Age and sex",
+    "Smoking; Disease severity",
+    "Frailty"
+  ),
+  Strategy = c(
+    "Restriction; Matching; Stratification; Standardization; Regression analysis; Propensity scores",
+    "External adjustment; Proxy measures; Imputation",
+    "Self-controlled design; Instrumental variable; Mendelian randomization; Active comparator; Regression discontinuity design; Sensitivity analyses"
+  )
+)
+
+confounders |>
+  flextable() |>
+  autofit()
+```
+
+## A side note on **observational studies**
+
+- Observational studies are based on data collected without any intervention or manipulation by the researcher
+
+- The researcher has no control over the study design
+
+- Observational studies involve collecting data from existing sources (e.g., medical records, surveys, registries, etc.) or by observing participants in their natural environment
+
+- Observational studies can be **prospective** (data collected going forwward in time) or "retrospective\*\* (data collected going backwards in time)
 
 ## Exploratory /associational questions
 
@@ -287,9 +331,9 @@ lm(blood_pressure ~ food_intake + exercise, data = data) |>
 
 ## Interpreting the predictors
 
-> **Food intake:** Holding `exercise` constant, a one-unit increase in diet is associated with a **0.4-unit increase in blood pressure**.
+> **Food intake:** Holding `exercise` constant, a one-unit increase in diet is associated with a **0.4-unit increase in blood pressure**
 
-> **Exercise:** Holding `food_intake` constant, a one-unit increase in `exercise` is associated with a **0.7-unit increase in blood pressure**.
+> **Exercise:** Holding `food_intake` constant, a one-unit increase in `exercise` is associated with a **0.7-unit increase in blood pressure**
 
 ## Mediator
 
@@ -564,7 +608,7 @@ data <- data.frame(
     collider = exposure + outcome + rnorm(1000, 0, 0.5)
   )
 
-# Display first 4 rows, rounded to 2 DECIMALS
+# Display first 4 rows, rounded to 2 decimals
 data |> 
   head(4) |> 
   flextable() |> 
@@ -631,17 +675,85 @@ lm(outcome ~ exposure + collider, data) |>
 
 Adjusting for the collider creates a spurious association between exposure and outcome
 
-## Recipe for a good confirmatory study
+## Another example of collider bias
 
-::: callout-tip
-- **Ask a clear causal question.** Use unambiguous causal language, such as: “Does reducing salt intake prevent strokes?”
+```{r}
+coord_dag <- list(
+  x = c(X = 0, C = 1, Y = 2),
+  y = c(X = 0, C = 1, Y = 0)
+)
 
-- **Prespecify the adjustment strategy.** Base your strategy on existing evidence, substantive knowledge, and explicit assumptions. A **directed acyclic graph (DAG)** can help communicate which variables should—and should not—be adjusted for.
+our_dag <- dagify(
+  C ~ X + Y,
+  Y ~ X,
+  coords = coord_dag,
+  labels = c(
+    "C" = "University Enrollment",
+    "X" = "Sport ability",
+    "Y" = "Academic ability"
+  )
+)
 
-- **Regression adjustment of confounders.** Include the variables needed to block relevant backdoor paths between the exposure and outcome in the regression model.
+ggdag(our_dag,
+      use_labels = "label") + 
+  theme_void()
+```
 
-- **Avoid inappropriate adjustment.** Do not adjust for **mediators** or **colliders**, as this can bias the estimated causal effect.
-:::
+## Conditioning on a collider through sampling
+
+```{r}
+data <- data.frame(
+  exposure = rnorm(1000, mean = 5, sd = 1.4),
+  outcome  = rnorm(1000, mean = 5, sd = 1.4)
+) |>
+  mutate(
+    collider = 3 * exposure + outcome + rnorm(1000, 0, 0.2),
+    group = ifelse(
+      collider > 20,
+      "Selected observations",
+      "Non-selected observations"
+    ),
+    group = factor(
+      group,
+      levels = c("Non-selected observations", "Selected observations")
+    )
+  )
+
+ggplot(data, aes(exposure, outcome)) +
+  geom_point(alpha = 0.2) +
+  geom_smooth(
+    method = "lm",
+    se = FALSE,
+    linewidth = 1
+  ) +
+  geom_point(
+    data = subset(data, group == "Selected observations"),
+    aes(colour = group),
+    alpha = 0.5
+  ) +
+  geom_smooth(
+    data = subset(data, group == "Selected observations"),
+    method = "lm",
+    se = FALSE,
+    aes(colour = group),
+    linewidth = 1.2
+  ) +
+  ylab("Sport ability") +
+  xlab("Academic ability") +
+  theme_classic()
+```
+
+Conditioning on the collider (i.e., university enrollment) creates a non-causal association between sports ability and academic ability
+
+## Recipe for an appropriate regression model
+
+- **Start with the research question** — what effect or association are you trying to estimate?
+
+- **Adjust for relevant measured confounders** that are common causes of the exposure and outcome
+
+- **For the total effect of an intervention/exposure, do not adjust for mediators** that lie on the causal pathway
+
+- **Do not condition on colliders**, either through sampling/selection or regression adjustment
 
 ## References and further reading
 
