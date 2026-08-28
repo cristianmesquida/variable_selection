@@ -188,7 +188,7 @@ confounders |>
 
 - Observational studies involve collecting data from existing sources (e.g., medical records, surveys, registries, etc.) or by observing participants in their natural environment
 
-- Observational studies can be **prospective** (data collected going forwward in time) or "retrospective\*\* (data collected going backwards in time)
+- Observational studies can be **prospective** (data collected going forwward in time) or **retrospective** (data collected going backwards in time)
 
 ## Exploratory /associational questions
 
@@ -407,7 +407,7 @@ head(data, 4) |>
   colformat_double(j = c(1, 2, 3), digits = 2)
 ```
 
-## Without adjustment regression of the mediator
+## Without adjusting for the mediator
 
 ```{r}
 #| echo: TRUE
@@ -423,7 +423,7 @@ lm(outcome ~ exposure, data = data) |>
 
 This estimates the total effect of the exposure. This is the effect of interest when estimating the overall effect of an exposure or intervention.
 
-## With adjustment regression of the mediator
+## Adjusting for the mediator
 
 ```{r}
 #| echo: TRUE
@@ -492,7 +492,7 @@ head(data, 4) |>
   colformat_double(j = c(2, 3), digits = 2)
 ```
 
-## Without adjustment regression of the confounder
+## Without adjusting for the confounder
 
 ```{r}
 #| echo: TRUE
@@ -508,7 +508,7 @@ lm(outcome ~ exposure, data) |>
 
 Without adjusting for the confounder, the estimated effect is a biased estimate of the true effect size
 
-## With regression adjustment of the confounder
+## Adjusting for the confounder
 
 ```{r}
 #| echo: TRUE
@@ -629,7 +629,7 @@ ggplot(data, aes(x = exposure, y = outcome)) +
   theme_classic()
 ```
 
-## Without regression adjustment of the collider
+## Without adjusting for the collider
 
 ```{r}
 #| echo: TRUE
@@ -657,7 +657,7 @@ data |>
   theme_classic()
 ```
 
-## With regression adjustment of the collider
+## Adjusting for the collider
 
 ```{r}
 #| echo: TRUE
@@ -671,7 +671,7 @@ lm(outcome ~ exposure + collider, data) |>
   color(i = 2, color = "red", part = "body")
 ```
 
-Adjusting for the collider creates a non spurious association between exposure and outcome
+Adjusting for the collider creates a spurious association between exposure and outcome
 
 ## Another example of collider bias
 
@@ -741,7 +741,7 @@ ggplot(data, aes(exposure, outcome)) +
   theme_classic()
 ```
 
-Conditioning on the collider (i.e., university enrollment) creates a non-causal association between sports ability and academic ability
+Conditioning on the collider (i.e., university enrollment) creates a spurious association between sports ability and academic ability
 
 ## Recipe for an appropriate regression model
 
