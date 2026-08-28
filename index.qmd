@@ -5,7 +5,7 @@ author: "Cristian Mesquida"
 institute: "Eindhoven University of Technology"
 date: today
 format: revealjs
-progress: true
+slide-number: true
 bibliography: references.bib
 nocite: |
  @*
@@ -47,31 +47,43 @@ By the end of this lecture, you should be able to:
 
 ## Simple regression
 
+The simplest form of regression analysis can be expressed as:
+
 $$Y_i = \beta_0 + \beta_1X_{1i} + \epsilon_i $$
 
 Where $Y_i$ = observed outcome, $\beta_0$ = intercept, $\beta_1$ = regression coefficient, $X_{1i}$ = predictor and $\epsilon_i$ = error term for observation $i$
 
-**An example:**
+## Simple regression
 
-$$\text{cardiac_arrest}_i = \beta_0 + \beta_1  \text{intervention} + \epsilon_i $$
+- It examines how a single independent variable predicts a single dependent variable.
 
-Where **Intervention** is categorical (e.g., 0 = no intervention and 1 = intervention)
+- For example, we can use regression to answer the research question: **Does exercise reduces blood pressure?**
+
+$$\text{blood_pressure}_i = \beta_0 + \beta_1  \text{exercise} + \epsilon_i $$
+
+Where **Exercise** is an categorical intervention variable (e.g., 0 = no exercise and 1 = exercise)
 
 ## Multiple regression
+
+When the model includes more than one predictor, it is called **multiple** or **multivariable** regression. It can be expressed as:
 
 $$Y_i = \beta_0 + \beta_1X_{1i} + \beta_2X_{2i} + ... +  \epsilon_i$$
 
 Where $\beta_1, \beta_2, \dots$ = regression coefficients and $X_{1i}, X_{2i}, \dots$ = predictors and and $\epsilon_i$ = error term for observation $i$
 
-**An example:**
+## Multiple regression
 
-$$\text{cardiac_arrest}_i = \beta_0 + 
-\beta_1  \text{intervention} + 
+- It examines how a dependent variable is related to multiple independent variables, while **adjusting or controlling for** the other predictors in the model.
+
+- For example, we know that **cholesterol** and **age** may also influence **blood pressure**, so we include them in the model:
+
+$$\text{blood_pressure}_i = \beta_0 + 
+\beta_1  \text{exercise} + 
 \beta_2  \text{cholesterol} + 
-\beta_3 \text{smoking} + 
+\beta_3 \text{age} + 
 \epsilon $$
 
-Where **intervention** is categorical (e.g., coded as 0/1) and **cholesterol** and **smoking** are a continuous variable
+Where **exercise** is categorical (e.g., coded as 0/1) and **cholesterol** and **age** are a continuous variable
 
 ## Example
 
@@ -82,7 +94,9 @@ nhefs <- readr::read_csv(
 )
 ```
 
-- Take the `nhefs` dataset as example, which contains data from [The National Health and Nutrition Examination Survey Data I Epidemiologic Follow-up Study (NHEFS)](https://vincentarelbundock.github.io/Rdatasets/articles/data.html).
+- Now, let's suppose we are researchers working for the Ministry of Health, and we want to investigate the effect of an intervention on a health outcome.
+
+- We will use the `nhefs` dataset as example. It contains data from [The National Health and Nutrition Examination Survey Data I Epidemiologic Follow-up Study (NHEFS)](https://vincentarelbundock.github.io/Rdatasets/articles/data.html).
 
 - The original dataset has `r dim(nhefs)[[1]]` rows and `r dim(nhefs)[[2]]` variables.
 
