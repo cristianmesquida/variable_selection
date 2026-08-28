@@ -437,7 +437,7 @@ lm(outcome ~ exposure + mediator, data = data) |>
   color(i = 2, color = "red", part = "body")
 ```
 
-This estimates the direct effect of the exposure (i.e., the effect of $X$ on $Y$ **not through M**). Adjusting for the mediator blocks the pathway $X$ → $M$ → $Y$, so the model no longer estimates the total effect of $X$ on $Y$.
+This estimates the direct effect of the exposure (i.e., the effect of $X$ on $Y$ **not through M**). Adjusting for the mediator blocks the pathway $X$ → $M$ → $Y$, so the model no longer estimates the total effect of $X$ on $Y$
 
 ## Confounder
 
@@ -615,9 +615,9 @@ data |>
 
 ## No conditioning on a collider
 
-- Exposure and outcome were simulated **independently**.
+- Exposure and outcome were simulated **independently**
 
-- Therefore, there is **no true association** between them.
+- Therefore, there is **no true association** between them
 
 ```{r}
 #| echo: TRUE
@@ -643,7 +643,7 @@ lm(outcome ~ exposure, data) |>
   color(i = 2, color = "red", part = "body")
 ```
 
-*No* association between exposure and outcome.
+*No* causal association between exposure and outcome
 
 ## Conditioning on a collider through sampling
 
@@ -671,7 +671,7 @@ lm(outcome ~ exposure + collider, data) |>
   color(i = 2, color = "red", part = "body")
 ```
 
-Adjusting for the collider creates a spurious association between exposure and outcome
+Adjusting for the collider creates a non spurious association between exposure and outcome
 
 ## Another example of collider bias
 
