@@ -598,13 +598,9 @@ ggdag(our_dag,
 set.seed(1234)
 
 # Simulate data
-data <- data.frame(
-  exposure = rnorm(1000),
-  outcome = rnorm(1000)
-) |>
-  mutate(
-    collider = exposure + outcome + rnorm(1000, 0, 0.5)
-  )
+data <- data.frame(exposure = rnorm(1000),
+                   outcome = rnorm(1000)) |>
+  mutate(collider = exposure + outcome + rnorm(1000, 0, 0.5))
 
 # Display first 4 rows, rounded to 2 decimals
 data |> 
