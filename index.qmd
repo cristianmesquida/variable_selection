@@ -554,7 +554,7 @@ Collider bias can arise through:
 
 - **Conditioning on CVD** (e.g., by stratifying on disease status or by adjusting on multiple regression) can create the **obesity paradox**
 
-- **Obesity paradox:** among people with CVD, obesity may appear to be associated with lower mortality, despite being associated with higher mortality in the general population
+- **Obesity paradox:** among people with CVD, obesity appear to be associated with lower mortality
 
 ## Collider in a DAG
 
