@@ -31,10 +31,6 @@ set_flextable_defaults(
 )
 ```
 
-## Abstract
-
-When conducting a multiple regression, researchers face an important question: **What variables should I include in the model?** This lecture introduces variable selection in multiple regression, with a focus on choosing predictors based on the research question. It first introduces different types of research questions, including causal, associational, and prediction questions. It then introduces Directed Acyclic Graphs (DAGs) and shows how they can help identify potential confounders and avoid inappropriate adjustment for mediators and colliders.
-
 ## Lecture's objectives
 
 By the end of this lecture, you should be able to:
@@ -45,47 +41,7 @@ By the end of this lecture, you should be able to:
 
 - Be familiar with Directed Acyclical Graphs (DAGs) and how they can help identify potential confounders and avoid inappropriate adjustment for mediators and colliders
 
-## Simple regression
-
-The simplest form of regression analysis can be expressed as:
-
-$$Y_i = \beta_0 + \beta_1X_{1i} + \epsilon_i $$
-
-Where $Y_i$ = observed outcome, $\beta_0$ = intercept, $\beta_1$ = regression coefficient, $X_{1i}$ = predictor and $\epsilon_i$ = error term for observation $i$
-
-## Simple regression
-
-- It examines how a single independent variable predicts a single dependent variable.
-
-- For example, we can use regression to answer the research question: **Does exercise reduces blood pressure?**
-
-$$\text{blood_pressure}_i = \beta_0 + \beta_1  \text{exercise} + \epsilon_i $$
-
-Where **Exercise** is an categorical intervention variable (e.g., 0 = no exercise and 1 = exercise)
-
-## Multiple regression
-
-When the model includes more than one predictor, it is called **multiple** or **multivariable** regression. It can be expressed as:
-
-$$Y_i = \beta_0 + \beta_1X_{1i} + \beta_2X_{2i} + ... +  \epsilon_i$$
-
-Where $\beta_1, \beta_2, \dots$ = regression coefficients and $X_{1i}, X_{2i}, \dots$ = predictors and and $\epsilon_i$ = error term for observation $i$
-
-## Multiple regression
-
-- It examines how a dependent variable is related to multiple independent variables, while **adjusting or controlling for** the other predictors in the model.
-
-- For example, we know that **cholesterol** and **age** may also influence **blood pressure**, so we include them in the model:
-
-$$\text{blood_pressure}_i = \beta_0 + 
-\beta_1  \text{exercise} + 
-\beta_2  \text{cholesterol} + 
-\beta_3 \text{age} + 
-\epsilon $$
-
-Where **exercise** is categorical (e.g., coded as 0/1) and **cholesterol** and **age** are a continuous variable
-
-## You are a researcher
+## First
 
 ```{r}
 nhefs <- readr::read_csv(
@@ -94,17 +50,13 @@ nhefs <- readr::read_csv(
 )
 ```
 
-- Now, let's suppose we are researchers working for the Ministry of Health, and we want to investigate the effect of an intervention on a health outcome.
+- Suppose we are researchers working for the Ministry of Health
 
-- We will use the `nhefs` dataset as example. It contains data from [The National Health and Nutrition Examination Survey Data I Epidemiologic Follow-up Study (NHEFS)](https://vincentarelbundock.github.io/Rdatasets/articles/data.html).
+- We want to investigate the predictors of blood pressure (`sbp`)
 
-- The original dataset has `r dim(nhefs)[[1]]` rows and `r dim(nhefs)[[2]]` variables.
+- We use the [`nhefs`](https://vincentarelbundock.github.io/Rdatasets/articles/data.html) dataset, which contains [survey data](https://wwwn.cdc.gov/Nchs/Nhanes/nhefs/default.aspx) from US population
 
-## `nhefs` dataset
-
-- Your job is to answer the question: Which variables explain systolic blood pressure (`sbp`)?
-
-- Which variables should we include in our model?
+- Which variables predict systolic blood pressure (`sbp`)?
 
 ::: scrollable
 ```{r}
@@ -133,64 +85,41 @@ The answer is that it depends on your **research question**
 
 ## Causal questions
 
-- Aims to answer a **well-defined, pre-specified question**: *“Does heavy alcohol consumption increase mortality?”*
+- Aims to answer a **well-defined, pre-specified question**: *“Does heavy sodium intake increase blood pressure?”*
 
 - Focus on estimating the causal effect of an an intervention/exposure on an outcome
 
 - Variables should be selected based on causal assumptions, theory, and prior evidence
 
-- Confounding needs to be addressed through study design and/or appropriate adjustment
-
 ## Causal questions
 
-- Causal questions can be studied using randomised controlled trials (RCTs) or observational studies
+- Causal questions can be studied using **randomised controlled trials** (RCTs) or **observational studies**
 
 - RCTs are generally preferred for establishing causal effects but they can be costly or unethical (e.g., randomly assigning people to smoke to study its effect on lung cancer)
 
-- Observational studies can also support causal inference, but confounding and other sources of bias are important limitations
+- Observational studies can also support causal inference, but confounding needs to be addressed
 
-- Regression analysis is commonly used in observational studies because it can adjust for measured confounders by including them as covariates in the model
-
-## A side note on **confounders**
-
-- The fact that a dataset like `nhefs` contains many variables does not mean that all of the confounders have been measured
-
-```{r}
-
-confounders <- tibble::tibble(
-  `Type of confounder` = c(
-    "Measured",
-    "Unmeasured but measurable",
-    "Unmeasurable"
-  ),
-  Examples = c(
-    "Age and sex",
-    "Smoking; Disease severity",
-    "Frailty"
-  ),
-  Strategy = c(
-    "Restriction; Matching; Stratification; Standardization; Regression analysis; Propensity scores",
-    "External adjustment; Proxy measures; Imputation",
-    "Self-controlled design; Instrumental variable; Mendelian randomization; Active comparator; Regression discontinuity design; Sensitivity analyses"
-  )
-)
-
-confounders |>
-  flextable() |>
-  autofit()
-```
+- Regression analysis can be used to adjust for measured confounders by including them as covariates in the model
 
 ## A side note on **observational studies**
 
 - Observational studies are based on data collected without any intervention or manipulation by the researcher
 
-- The researcher has no control over the study design
+- Observational studies involve collecting data from:
 
-- Observational studies involve collecting data from existing sources (e.g., medical records, surveys, registries, etc.) or by observing participants in their natural environment
+  - Medical records, surveys, registries, etc.
 
-- Observational studies can be **prospective** (data collected going forwward in time) or **retrospective** (data collected going backwards in time)
+  <!-- -->
 
-## Exploratory /associational questions
+  - Observing participants in their natural environment
+
+- Observational studies can be:
+
+  - **Prospective** (data collected going forward in time)
+
+  - **Retrospective** (data collected going backwards in time)
+
+## Exploratory / associational questions
 
 - Does not have a **specific pre-specified hypothesis**
 
@@ -198,47 +127,17 @@ confounders |>
 
 - Examines multiple variables to identify **potential associations**
 
-- Findings are **hypothesis-generating** and should be confirmed in future research
-
-- This type of study can suffer from confounding and other source of bias, so causal claims should be avoided
+- Based on observational studies so there is risk of confounding
 
 ## Prediction questions
 
-- Asks: “How accurately can we predict risk of mortality in patients suffering from metabolic syndrome?”
-
-- Aims to build the best-performing model using available predictors
+- Asks: “*How accurately can we predict blood pressure in the sedentary population?*”
 
 - Uses observed data to make predictions about an outcome
 
 - Focuses on prediction accuracy, rather than estimating causal effects
 
 - The best model is the one that generalizes well to new, unseen data
-
-## Causal questions and DAGs
-
-```{r}
-dag <- dagify(
-  bp ~ obesity + sep + exercise,
-  obesity ~ exercise,
-  hospialization ~ exercise + bp,
-  exercise ~ sep,
-  
-  labels = c(
-    "bp" = "Blood\n Pressure",
-    "obesity" = "Obesity",
-    "sep" = "SEP",
-    "hospialization" = "Hospialization",
-    "exercise" = "Physical\n Activity"
-  )
-)
-
-ggdag(
-  dag,
-  text = FALSE,
-  use_labels = "label"
-) +
-  theme_void()
-```
 
 ## Directed Acyclic Graph (DAG)
 
@@ -276,6 +175,11 @@ These variables have very different implications for statistical adjustment.
 
 - A predictor ($X$) is a variable included in the model to explain the outcome ($Y$)
 
+- Predictors can be:
+
+  - Exposures/interventions (e.g., diet, exercise, medication, etc.)
+  - Covariates: other characteristics that may influence the outcome (e.g., age, sex, socio-economic position, etc.)
+
 ## Predictors in a DAG
 
 ```{r}
@@ -284,32 +188,32 @@ coord_dag <- list(
   y = c(X1 = 0, X2 = 1, Y = 0)
 )
 
-our_dag <- ggdag::dagify(Y ~ X1,
-                         Y ~ X2,
-                         coords = coord_dag,
-                         labels = c("X1" = "Physical\n Activity",
-                                    "X2" = "Food\n Intake",
-                                    "Y" = "Blood\n Pressure")
-                         )
+our_dag <- dagify(
+  Y ~ X1,
+  Y ~ X2,
+  coords = coord_dag,
+  labels = c("X1" = "Physical\n Activity",
+             "X2" = "Sodium\n Intake",
+             "Y" = "Blood\n Pressure")
+  )
 
-ggdag(our_dag,
-      use_labels = "label") + theme_void()
+ggdag(our_dag, use_labels = "label") + theme_void()
 ```
 
-## Simulating predictors
+## Simulated example of predictors
 
 ```{r}
-#| echo: TRUE
+#| echo: FALSE
 
 set.seed(1234)
 
 # Simulate data
-data <- data.frame(food_intake = rnorm(200, 10, 2),
+data <- data.frame(sodium_intake = rnorm(200, 10, 2),
                    exercise = rnorm(200, 3, 3)) |>
-  mutate(blood_pressure = 7 + 0.4 * food_intake + 0.7 * exercise + rnorm(200, 0, 3))
+  mutate(blood_pressure = 7 + 1 * sodium_intake + -1.7 * exercise + rnorm(200, 0, 3))
 
-# Display first 4 rows, round to 2 decimals
-head(data, 4) |> 
+# Display first 8 rows, round to 2 decimals
+head(data, 8) |> 
   flextable() |> 
   colformat_double(j = c(1:3), digits = 2)
 ```
@@ -318,9 +222,12 @@ head(data, 4) |>
 
 ```{r}
 #| echo: TRUE
+res <- lm(blood_pressure ~ exercise + sodium_intake, data = data)
+```
 
-# Run regression analysis and display output, rounded to 2 decimals
-lm(blood_pressure ~ food_intake + exercise, data = data) |>
+```{r}
+#| echo: FALSE
+res |>
   tidy() |>
   select(term, estimate, p.value) |>
   flextable() |>
@@ -331,9 +238,9 @@ lm(blood_pressure ~ food_intake + exercise, data = data) |>
 
 ## Interpreting the predictors
 
-> **Food intake:** Holding `exercise` constant, a one-unit increase in diet is associated with a **0.4-unit increase in blood pressure**
+> **Sodium intake:** Holding `exercise` constant, a one-unit increase in sodium is associated with a **`r round(res$coefficients[2], 2)`-unit decrease in blood pressure**\*
 
-> **Exercise:** Holding `food_intake` constant, a one-unit increase in `exercise` is associated with a **0.7-unit increase in blood pressure**
+> **Exercise:** Holding `sodium_intake` constant, a one-unit increase in `exercise` is associated with a **`r round(res$coefficients[3], 2)`-unit increase in blood pressure**
 
 ## Mediator
 
@@ -343,7 +250,7 @@ A **mediator** is a variable that:
 
 - influences the outcome ($Y$)
 
-- lies on the causal pathway between X and Y
+- lies on the causal pathway between $X$ and $Y$
 
 - adjusting for it removes the **mediated effect** from the estimated effect of $X$
 
@@ -360,9 +267,9 @@ our_dag <- dagify(M ~ X,
                   Y ~ M,
                   Y ~ X,
                   coords = coord_dag,
-                  labels = c("M" = "Fast food", 
+                  labels = c("M" = "Sodium\n intake ", 
                              "X" = "Heavy\n alcohol",
-                             "Y" = "Mortality")
+                             "Y" = "Blood\n pressure")
                   )
 
 ggdag(our_dag, 
@@ -385,10 +292,10 @@ The overall effect of $X$ on $Y$, combining the direct and indirect effects:
 
 - Total effect = Direct effect + Indirect effect
 
-## Simulating a mediator
+## Simulated example of a mediator
 
 ```{r}
-#| echo: TRUE
+#| echo: FALSE
 
 set.seed(1234)
 
@@ -401,8 +308,8 @@ data <- data.frame(
     outcome = 0.5 * exposure + 0.7 * mediator + rnorm(200, 0, 1)
   )
 
-# Display the first 4 observations, rounded to 2 decimals
-head(data, 4) |> 
+# Display the first 8 observations, rounded to 2 decimals
+head(data, 8) |> 
   flextable() |> 
   colformat_double(j = c(1, 2, 3), digits = 2)
 ```
@@ -411,9 +318,12 @@ head(data, 4) |>
 
 ```{r}
 #| echo: TRUE
+res <- lm(outcome ~ exposure, data = data) 
+```
 
-# Run model and display estimates and p-values, rounded to 2 decimals
-lm(outcome ~ exposure, data = data) |> 
+```{r}
+#| echo: FALSE
+res |> 
   tidy() |> 
   select(term, estimate, p.value) |> 
   flextable() |> 
@@ -421,15 +331,21 @@ lm(outcome ~ exposure, data = data) |>
   color(i = 2, color = "green", part = "body")
 ```
 
-This estimates the total effect of the exposure. This is the effect of interest when estimating the overall effect of an exposure or intervention.
+This model estimates the total effect of the [exposure]{style="color:green;"}.
+
+The total effect is the effect of interest when estimating the overall effect of an exposure or intervention.
 
 ## Adjusting for the mediator
 
 ```{r}
 #| echo: TRUE
 
-# Run model and display estimates and p-values, rounded to 2 decimals
-lm(outcome ~ exposure + mediator, data = data) |>
+res <- lm(outcome ~ exposure + mediator, data = data)
+```
+
+```{r}
+#| echo: FALSE
+res |>
   tidy() |>
   select(term, estimate, p.value) |> 
   flextable() |> 
@@ -437,7 +353,9 @@ lm(outcome ~ exposure + mediator, data = data) |>
   color(i = 2, color = "red", part = "body")
 ```
 
-This estimates the direct effect of the exposure (i.e., the effect of $X$ on $Y$ **not through M**). Adjusting for the mediator blocks the pathway $X$ → $M$ → $Y$, so the model no longer estimates the total effect of $X$ on $Y$
+[exposure]{style="color:red;"} corresponds to the direct effect (i.e., the effect of $X$ on $Y$ **not through M**).
+
+Adjusting for the mediator blocks the pathway $X$ → $M$ → $Y$, so the model no longer estimates the total effect of $X$ on $Y$
 
 ## Confounder
 
@@ -461,7 +379,7 @@ our_dag <- dagify(X ~ C,
                   coords = coord_dag,
                   labels = c("C" = "SEP*", 
                              "X" = "Heavy\n alcohol",
-                             "Y" = "Mortality")
+                             "Y" = "Blood\n pressure")
                   )
 
 ggdag(our_dag,
@@ -473,7 +391,7 @@ ggdag(our_dag,
 ## Confounding in practice
 
 ```{r}
-#| echo: TRUE
+#| echo: FALSE
 
 set.seed(1234)
 
@@ -481,13 +399,13 @@ set.seed(1234)
 data <- data.frame(
   covariate = sample(0:1, 100, replace = TRUE)
 ) |>
-  dplyr::mutate(
+    mutate(
     exposure = runif(100, 0, 1) + 0.3 * covariate,
     outcome = 2.0 + 0.5 * exposure + 0.25 * covariate
   )
 
-# Display first 4 rows, rounded to 2 decimals
-head(data, 4) |> 
+# Display first 8 rows, rounded to 2 decimals
+head(data, 8) |> 
   flextable() |> 
   colformat_double(j = c(2, 3), digits = 2)
 ```
@@ -496,9 +414,12 @@ head(data, 4) |>
 
 ```{r}
 #| echo: TRUE
+res <- lm(outcome ~ exposure, data) 
+```
 
-# Run model and display estimates and p-values, rounded to 2 decimals
-lm(outcome ~ exposure, data) |> 
+```{r}
+#| echo: FALSE
+res |> 
   tidy() |> 
   select(term, estimate, p.value) |> 
   flextable() |> 
@@ -506,23 +427,25 @@ lm(outcome ~ exposure, data) |>
   color(i = 2, color = "red", part = "body")
 ```
 
-Without adjusting for the confounder, the estimated effect is a biased estimate of the true effect size
+Without adjusting for the confounder, the estimated effect of [exposure]{style="color:red;"} is biased
 
 ## Adjusting for the confounder
 
 ```{r}
-#| echo: TRUE
+#| echo: FALSE
+res <- lm(outcome ~ exposure + covariate, data)
+```
 
-# Run model and display estimates and p-values, rounded to 2 decimals
-lm(outcome ~ exposure + covariate, data) |> 
+```{r}
+res |> 
   tidy() |> 
   select(term, estimate, p.value) |> 
   flextable() |> 
   colformat_double(j = c(2, 3), digits = 2) |> 
-  color(i = 2, color = "blue", part = "body")
+  color(i = 2, color = "green", part = "body")
 ```
 
-Adjusting for the confounder results in an unbiased estimate of effect of the exposure
+Adjusting for the confounder results in an unbiased estimate of effect of the [exposure]{style="color:green;"}
 
 ## Collider
 
@@ -534,27 +457,10 @@ A **collider** is a variable that:
 
 - is therefore a common consequence of both the exposure and the outcome
 
-- Adjusting for a collider can induce a spurious association between $X$ and $Y$
+- Collider bias can arise through:
 
-## 
-
-Collider bias can arise through:
-
-- Study design: sampling, stratification or matching
-
-- Statistical analysis: adjusting for the collider in a regression model
-
-## An example: The Obesity Paradox
-
-- In the general population, the higher the body mass index higher the mortality risk
-
-- Previous research investigated whether obesity increase mortality among people with cardiovascular disease (CVD)
-
-- However, CVD can act as a collider because both obesity and other causes of mortality can contribute to CVD
-
-- **Conditioning on CVD** (e.g., by stratifying on disease status or by adjusting on multiple regression) can create the **obesity paradox**
-
-- **Obesity paradox:** among people with CVD, obesity appear to be associated with lower mortality
+  - Study design: sampling, stratification or matching
+  - Statistical analysis: adjusting for the collider in a regression model
 
 ## Collider in a DAG
 
@@ -579,21 +485,10 @@ ggdag(our_dag,
 
 \*CVD = Cardiovascular disease
 
-## The Obesity Paradox
-
-| **Analysis** | **RD (95% CI)** |
-|:--------------------------------|:--------------------------------------|
-| Crude | 0.05 (0.03, 0.07) |
-| Adjusted — total population | 0.03 (0.02, 0.05) |
-| [Adjusted — CVD]{style="color:red"} | [−0.12 (−0.20, −0.04)]{style="color:red"} |
-| Adjusted — No CVD | 0.03 (0.01, 0.05) |
-
-: Comparison of the estimated risk difference for the effect of obesity on mortality. Results obtained from @obesity_paradox2015
-
-## Simulating a collider
+## Simulated example of collider bias
 
 ```{r}
-#| echo: TRUE
+#| echo: FALSE
 
 set.seed(1234)
 
@@ -602,9 +497,9 @@ data <- data.frame(exposure = rnorm(1000),
                    outcome = rnorm(1000)) |>
   mutate(collider = exposure + outcome + rnorm(1000, 0, 0.5))
 
-# Display first 4 rows, rounded to 2 decimals
+# Display first 8 rows, rounded to 2 decimals
 data |> 
-  head(4) |> 
+  head(8) |> 
   flextable() |> 
   colformat_double(j = c(1, 2, 3), digits = 2)
 ```
@@ -616,7 +511,7 @@ data |>
 - Therefore, there is **no true association** between them
 
 ```{r}
-#| echo: TRUE
+#| echo: FALSE
 #| out-width: 100%
 
 ggplot(data, aes(x = exposure, y = outcome)) +
@@ -629,22 +524,25 @@ ggplot(data, aes(x = exposure, y = outcome)) +
 
 ```{r}
 #| echo: TRUE
+res <- lm(outcome ~ exposure, data)
+```
 
-# Run model and display estimates and p-values, rounded to 2 decimals
-lm(outcome ~ exposure, data) |> 
+```{r}
+#| echo: FALSE
+res |> 
   tidy() |> 
   select(term, estimate, p.value) |> 
   flextable() |> 
   colformat_double(j = c(2, 3), digits = 2) |> 
-  color(i = 2, color = "red", part = "body")
+  color(i = 2, color = "green", part = "body")
 ```
 
-*No* causal association between exposure and outcome
+[No causal association]{style="color:green;"} between [exposure]{style="color:green;"} and outcome
 
 ## Conditioning on a collider through sampling
 
 ```{r}
-#| echo: TRUE
+#| echo: FALSE
 data |> 
   filter(collider > 0.2) |>  # Select observations based on the collider
   ggplot(aes(x = exposure, y = outcome)) +
@@ -657,9 +555,12 @@ data |>
 
 ```{r}
 #| echo: TRUE
+res <- lm(outcome ~ exposure + collider, data)
+```
 
-# Run model and display estimates and p-values, rounded to 2 decimals
-lm(outcome ~ exposure + collider, data) |> 
+```{r}
+#| echo: FALSE
+res |> 
   tidy() |> 
   select(term, estimate, p.value) |> 
   flextable() |> 
@@ -667,14 +568,35 @@ lm(outcome ~ exposure + collider, data) |>
   color(i = 2, color = "red", part = "body")
 ```
 
-Adjusting for the collider creates a spurious association between exposure and outcome
+Adjusting for the collider creates [a spurious association]{style="color:red;"} between [exposure]{style="color:red;"} and outcome
+
+## An example: The Obesity Paradox
+
+- The higher the body mass index, the higher the mortality risk
+
+- Cardiovascular disease (CVD) can act as a collider
+
+- **Conditioning on CVD** (e.g., by stratifying on disease status or by adjusting on multiple regression) create the **obesity paradox**
+
+- **Obesity paradox:** among people with CVD, obesity appear to be associated with lower mortality
+
+## The Obesity Paradox
+
+| **Analysis** | **Risk Difference (95% CI)** |
+|:--------------------------------|:--------------------------------------|
+| [Crude (mortality \~ obesity + confounders)]{style="color:green"} | [0.05 (0.03, 0.07)]{style="color:green"} |
+| Adjusted — total population | 0.03 (0.02, 0.05) |
+| [Adjusted — CVD (mortality \~ obesity + CVD + confounders)]{style="color:red"} | [−0.12 (−0.20, −0.04)]{style="color:red"} |
+| Adjusted — No CVD | 0.03 (0.01, 0.05) |
+
+: Comparison of the estimated risk difference for the effect of obesity on mortality. Results obtained from @obesity_paradox2015
 
 ## Another example of collider bias
 
 ```{r}
 coord_dag <- list(
   x = c(X = 0, C = 1, Y = 2),
-  y = c(X = 0, C = 1, Y = 0)
+  y = c(X = 0, C = 1.5, Y = 0)
 )
 
 our_dag <- dagify(
@@ -682,14 +604,16 @@ our_dag <- dagify(
   Y ~ X,
   coords = coord_dag,
   labels = c(
-    "C" = "University Enrollment",
-    "X" = "Sport ability",
-    "Y" = "Academic ability"
+    C = "University enrollment",
+    X = "Sport ability",
+    Y = "Academic ability"
   )
 )
 
-ggdag(our_dag,
-      use_labels = "label") + 
+ggdag(our_dag) +
+  annotate("text", x = 1, y = 1.25, label = "University enrollment") +
+  annotate("text", x = 0, y = -0.25, label = "Sport ability") +
+  annotate("text", x = 2, y = -0.25, label = "Academic ability") +
   theme_void()
 ```
 
@@ -749,6 +673,6 @@ Conditioning on the collider (i.e., university enrollment) creates a spurious as
 
 - **Do not condition on colliders**, either through sampling/selection or regression adjustment
 
-## References and further reading
+## Further reading and references
 
 Further reading includes @tutorial_dag2022 and @lewer_2025
