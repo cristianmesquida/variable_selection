@@ -199,13 +199,12 @@ our_dag <- dagify(
 
 ggdag(our_dag, use_labels = "label") + theme_void()
 ```
+
 ## The question
 
-Instead of simply asking:
-“Do people who exercise more have lower blood pressure?”
+Instead of simply asking: “Do people who exercise more have lower blood pressure?”
 
-we ask:
-“Is exercise associated with blood pressure after accounting for differences in sodium intake?”
+we ask: “Is exercise associated with blood pressure after accounting for differences in sodium intake?”
 
 ## Simulated example of predictors
 
@@ -276,6 +275,7 @@ res2 <- lm(blood_pressure ~ exercise, data = data) |>
 ::::: columns
 ::: {.column width="50%"}
 #### Model with covariate
+
 ```{r}
 res
 ```
@@ -283,6 +283,7 @@ res
 
 ::: {.column width="50%"}
 #### Model without covariate
+
 ```{r}
 res2
 ```
@@ -294,7 +295,6 @@ res2
 - Control for differences in the covariate that can contribute to the observed association
 
 - Increase the statistical precision of the estimated effect of exposure (i.e., smaller standard error and more precise CI) and increase statistical power
-
 
 ## Mediator
 
@@ -716,6 +716,14 @@ ggplot(data, aes(exposure, outcome)) +
 ```
 
 Conditioning on the collider (i.e., university enrollment) creates a spurious association between sports ability and academic ability
+
+## Examples of bad controls in applied research
+
+- Risk factors of COVID-19 [@griffith2020]
+
+- The birth-weight paradox [@hernandez2006]
+
+- Multigenerational mobility [@breen2018]
 
 ## Recipe for an appropriate regression model
 
