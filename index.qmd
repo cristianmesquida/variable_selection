@@ -184,8 +184,8 @@ These variables have very different implications for statistical adjustment.
 
 ```{r}
 coord_dag <- list(
-  x = c(X1 = 0, X2 = 0, Y = 2),
-  y = c(X1 = 0, X2 = 1, Y = 0)
+  x = c(X1 = -1, X2 = -1, Y = 2),
+  y = c(X1 = -1, X2 = 1, Y = 0)
 )
 
 our_dag <- dagify(
@@ -199,6 +199,13 @@ our_dag <- dagify(
 
 ggdag(our_dag, use_labels = "label") + theme_void()
 ```
+## The question
+
+Instead of simply asking:
+“Do people who exercise more have lower blood pressure?”
+
+we ask:
+“Is exercise associated with blood pressure after accounting for differences in sodium intake?”
 
 ## Simulated example of predictors
 
@@ -229,8 +236,9 @@ res <- lm(blood_pressure ~ exercise + sodium_intake, data = data)
 #| echo: FALSE
 res |>
   tidy() |>
-  select(term, estimate, p.value) |>
+  select(term, estimate, std.error, p.value) |>
   flextable() |>
+  colformat_double(j = c(2, 4), digits = 2) |> 
   colformat_double(j = c(2, 3), digits = 2) |> 
   color(i = 2, color = "blue", part = "body") |> 
   color(i = 3, color = "green", part = "body")
@@ -241,6 +249,52 @@ res |>
 > **Sodium intake:** Holding `exercise` constant, a one-unit increase in sodium is associated with a **`r round(res$coefficients[2], 2)`-unit decrease in blood pressure**\*
 
 > **Exercise:** Holding `sodium_intake` constant, a one-unit increase in `exercise` is associated with a **`r round(res$coefficients[3], 2)`-unit increase in blood pressure**
+
+## Including a covariate increase precision
+
+```{r}
+#| echo: FALSE
+
+res <- lm(blood_pressure ~ exercise + sodium_intake, data = data) |> 
+  tidy() |> 
+  select(term, estimate, std.error, p.value) |>
+  flextable() |>
+  colformat_double(j = c(2, 4), digits = 2) |> 
+  colformat_double(j = c(2, 3), digits = 2) |> 
+  color(i = 2, j = c(3), color = "green", part = "body")
+  
+
+res2 <- lm(blood_pressure ~ exercise, data = data) |> 
+  tidy() |> 
+  select(term, estimate, std.error, p.value) |>
+  flextable() |>
+  colformat_double(j = c(2, 4), digits = 2) |> 
+  colformat_double(j = c(2, 3), digits = 2) |> 
+  color(i = 2, j = c(3), color = "red", part = "body")
+```
+
+::::: columns
+::: {.column width="50%"}
+#### Model with covariate
+```{r}
+res
+```
+:::
+
+::: {.column width="50%"}
+#### Model without covariate
+```{r}
+res2
+```
+:::
+:::::
+
+## Why to include a covariate?
+
+- Control for differences in the covariate that can contribute to the observed association
+
+- Increase the statistical precision of the estimated effect of exposure (i.e., smaller standard error and more precise CI) and increase statistical power
+
 
 ## Mediator
 
