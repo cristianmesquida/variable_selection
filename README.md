@@ -1,10 +1,9 @@
-# Multiple Regression I: Variable Selection
+# Multiple Regression I: Variable Selection (Part 3)
 
-Course materials for *Behavioral Research Methods 2* (Eindhoven University of Technology).
+Course materials for *Behavioral Research Methods 2*
 
 ## Materials
 
-- [Course page (links to slides and exercises)](https://cristianmesquida.github.io/variable_selection/)
 - [Slides](https://cristianmesquida.github.io/variable_selection/slides.html)
 - [Web exercises](https://cristianmesquida.github.io/variable_selection/Webexercises.html)
 
@@ -12,6 +11,5 @@ Course materials for *Behavioral Research Methods 2* (Eindhoven University of Te
 
 | Rendered page | Source |
 |---|---|
-| `index.html` | hand-written landing page |
-| `slides.html` | [index.qmd](index.qmd) |
+| `slides.html` | [slides.qmd](slides.qmd) |
 | `Webexercises.html` | [Webexercises.Rmd](Webexercises.Rmd) |

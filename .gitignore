@@ -10,3 +10,6 @@
 .RData
 .Ruserdata
 .Renviron
+
+/.quarto/
+**/*.quarto_ipynb
