@@ -1,9 +1,4 @@
 ---
-title: "Multiple Regression I: Variable Selection"
-subtitle: "Behavioral Research Methods 2"
-institute: "Eindhoven University of Technology"
-author: "Cristian Mesquida"
-date: today
 format:
   html:
     css: styles.css
