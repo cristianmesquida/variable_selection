@@ -288,3 +288,4 @@ opts_collider_bias <- c(
 )
 ```
 
+`r longmcq(opts_collider_bias)`
