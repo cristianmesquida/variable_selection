@@ -1,0 +1,290 @@
+---
+title: "Web Exercises"
+output: webexercises::webexercises_default
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+library(webexercises)
+```
+
+
+```{r, echo = FALSE, results='asis'}
+# Uncomment to change widget colours:
+#style_widgets(incorrect = "goldenrod", correct = "purple")
+```
+
+**What is a confounder?**
+
+```{r}
+opts_confounder <- c(
+  answer = "A variable that is correlated with the predictor and the outcome", 
+  "A variable that is caused by the predictor and affects the outcome",
+  "A variable that is associated with the outcome but not the predictor", 
+          "A variable that is unrelated to both the predictor and the outcome", 
+          "libraries")
+```
+
+`r longmcq(opts_confounder)`
+
+**What is a mediator?**
+
+```{r}
+opts_mediator <- sample(c(
+  answer = "A variable that is influenced by the predictor and in turn influences the outcome",
+  "A variable that changes the strength or direction of the relationship between the predictor and the outcome",
+  "A variable that is associated with the outcome but not the predictor",
+  "A variable that the predictor but not the outcome"
+))
+```
+
+`r longmcq(opts_mediator)`
+
+**What is a collider?**
+
+```{r}
+opts_collider <- sample(c(
+  answer = "A variable that is caused by both the predictor and the outcome",
+  "A variable that is influenced by the predictor and in turn influences the outcome",
+  "A variable that is associated with both the predictor and the outcome",
+  "A variable that changes the strength or direction of the relationship between the predictor and the outcome"
+))
+```
+
+`r longmcq(opts_collider)`
+
+**What are bad controls?**
+You can select multiple answers for this question
+```{r}
+opts_controls <- sample(c(
+  answer = "Variables that look like sensible adjustments but actively distort the estimate of the intervention effect.",
+  "Variables that if adjusted for, will reduce bias in the estimate of the intervention effect",
+  "A confounder is a case of a bad control",
+  answer = "Both mediators and colliders are cases of bad controls"
+))
+```
+
+`r longmcq(opts_controls)`
+
+**Based on the DAG below, select the correct answer(s).**
+
+```{r}
+#| echo: FALSE
+#| message: FALSE
+
+library(dagitty)
+library(ggdag)
+
+# DAG specification
+model <- dagitty("dag{
+  Z -> X
+  Z -> Y
+  X -> P
+  P -> Y
+}")
+
+
+# Coordinates for plotting
+coordinates(model) <- list(
+  x = c(X = 1, P = 2, Z = 2, Y = 3),
+  y = c(X = 1, P = 1, Z = 2, Y = 1)
+)
+
+# Plot the DAG
+ggdag(model) + theme_dag()
+```
+
+
+```{r}
+opts_dag <- sample(c(
+  answer = "Z is a confounder so it should be adjusted for",
+  "P is a mediator so it should be adjusted for",
+  "Z is a collider so it should be adjusted for",
+  "P and Z should be adjusted for"
+))
+```
+
+`r longmcq(opts_dag)`
+
+**What is the correct statistical model to estimate the effect of X on Y?**
+
+```{r}
+#| echo: FALSE
+#| message: FALSE
+
+library(dagitty)
+library(ggdag)
+
+# DAG specification
+model <- dagitty("dag{
+  X -> Y
+  X -> P
+  P -> Y
+}")
+
+
+# Coordinates for plotting
+coordinates(model) <- list(
+  x = c(X = 1, P = 2, Y = 3),
+  y = c(X = 1, P = 2, Y = 1)
+)
+
+# Plot the DAG
+ggdag(model) + theme_dag()
+```
+
+```{r}
+opts_mediator <- sample(c(
+  "Y ~ X + P",
+  answer = "Y ~ X",
+  "Y ~ X + P + X:P",
+  "Y ~ X + I(P)"
+))
+```
+
+`r longmcq(opts_mediator)`
+
+**Suppose that the causal effect of intervention X on Y is 2. You have a confounder C that is correlated with both X and Y. You run two linear models `m1 = lm(Y ~ X)` and `m2 = lm(Y ~ X + C)`. What is the consequence of including C in the model?**
+
+```{r}
+#| echo: FALSE
+
+set.seed(123)
+n <- 1e4
+c <- 1 + rnorm(n)
+x <- c + rnorm(n)
+causal_coef <- 2
+y <- 1 + causal_coef*x + c + rnorm(n)
+
+
+m1 <- lm(y ~ x)
+m2 <- lm(y ~ x + c)
+
+results <- data.frame(
+  Model = c("m1", "m2"),
+  Intercept = c(
+    round(coef(m1)["(Intercept)"], 2),
+    round(coef(m2)["(Intercept)"], 2)
+    ),
+  Estimate = c(
+    round(coef(m1)["x"], 2),
+    round(coef(m2)["x"], 2)
+    ),
+  SE = c(
+    round(summary(m1)$coefficients["x", "Std. Error"], 4),
+    round(summary(m2)$coefficients["x", "Std. Error"], 4)
+    )
+  )
+
+results |> 
+  flextable::flextable()
+```
+
+```{r}
+opts_model_confounder <- sample(c(
+  "Still a biased estmate of the effect of X on Y because it is smaller than 2",
+  "It does not matter because both models return very small standard errors (SE)",
+  "A smaller intercept, which is good because the smaller the less biased",
+  answer = "A more accurate estimate of the effect X on Y, closer to the true causal effect of 2"
+))
+```
+
+`r longmcq(opts_model_confounder)`
+
+
+**The first model estimates the relationship between X and Y without adjusting for the mediator M, whereas the second model additionally adjusts for M. Based on the two models, which statement best describes the effect of X on Y?**
+
+```{r}
+#| echo: FALSE
+
+set.seed(123)
+n <- 1e4
+
+x <- rnorm(n)
+
+mediator_coef <- 1
+m <- mediator_coef * x + rnorm(n)
+
+causal_coef <- 1
+y <- 1 + causal_coef * m + rnorm(n)
+
+m1 <- lm(y ~ x)
+m2 <- lm(y ~ x + m)
+
+results <- data.frame(
+  Model = c("m1", "m2"),
+  Estimate = c(
+    round(coef(m1)["x"], 2),
+    round(coef(m2)["x"], 2)
+    ),
+  SE = c(
+    round(summary(m1)$coefficients["x", "Std. Error"], 4),
+    round(summary(m2)$coefficients["x", "Std. Error"], 4)
+  )
+)
+
+results |> 
+  flextable::flextable()
+```
+
+
+```{r}
+opts_model_mediator <- sample(c(
+  "The first model estimates the direct effect of X on Y, while the second estimates the total effect",
+  answer = "The first model estimates the total effect of X on Y, while the second estimates the direct effect of X on Y",
+"Both models estimate the total effect of X on Y because adjusting for M does not affect the interpretation of the coefficient for X",
+"The second model provides a more accurate estimate of the total effect because it accounts for the pathway through M"
+))
+```
+
+`r longmcq(opts_model_mediator)`
+
+**Based on the two models above, what is the causal effect of X on Y?**
+
+- The causal effect is `r fitb(0.02)`
+
+**Can you make causal claims based on observational data?**
+
+```{r}
+opts_causal_claims <- c(
+  "No, because the data is observational and not a randomized controlled trial",
+  "Yes, but researchers need to think carefully about good controls that might bias the estimate of the causal effect",
+"No, because observational data suffers from confounding and cannot be used to make causal claims",
+"Yes, but researchers need to think carefully about bad controls that might bias the estimate of the causal effect",
+answer = "B and D"
+)
+```
+
+`r longmcq(opts_causal_claims)`
+
+**What is the effect of adjusting for Z in the statistical model?**
+```{r}
+#| echo: FALSE
+#| message: FALSE
+
+# DAG specification
+model <- dagitty("dag{
+  X -> Y
+  Z -> X
+  Z -> Y
+}")
+
+
+# Coordinates for plotting
+coordinates(model) <- list(
+  x = c(X = 1, Z = 2, Y = 3),
+  y = c(X = 1, Z = 2, Y = 1)
+)
+
+# Plot the DAG
+ggdag(model) + theme_dag()
+```
+```{r}
+opts_collider_bias <- c(
+  "Adjusting will reduce bias in the estimate of the effect of X on Y",
+  "It depends on the research question and the context of the study",
+  answer = "It can induce a non-causal association between X and Y leading to a biased estimate of the effect of X on Y",
+  "Adjusting will have no effect on the estimate of the effect of X on Y and it will also reduce the SE of the estimate thus increasing the precision of the estimate"
+)
+```
+
