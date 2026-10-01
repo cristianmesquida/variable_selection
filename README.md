@@ -4,12 +4,14 @@ Course materials for *Behavioral Research Methods 2* (Eindhoven University of Te
 
 ## Materials
 
-- [Slides](https://cristianmesquida.github.io/variable_selection/index.html)
+- [Course page (links to slides and exercises)](https://cristianmesquida.github.io/variable_selection/)
+- [Slides](https://cristianmesquida.github.io/variable_selection/slides.html)
 - [Web exercises](https://cristianmesquida.github.io/variable_selection/Webexercises.html)
 
 ## Source files
 
 | Rendered page | Source |
 |---|---|
-| `index.html` | [index.qmd](index.qmd) |
+| `index.html` | hand-written landing page |
+| `slides.html` | [index.qmd](index.qmd) |
 | `Webexercises.html` | [Webexercises.Rmd](Webexercises.Rmd) |

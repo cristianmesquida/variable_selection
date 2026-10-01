@@ -5,6 +5,7 @@ institute: "Eindhoven University of Technology"
 author: "Cristian Mesquida"
 date: today
 format: revealjs
+output-file: slides.html
 slide-number: true
 bibliography: references.bib
 nocite: |
