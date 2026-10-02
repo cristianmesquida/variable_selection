@@ -242,28 +242,28 @@ coord_dag <- list(
 our_dag <- dagify(
   Y ~ X1,
   Y ~ X2,
-  coords = coord_dag,
-  labels = c("X1" = "Physical\n Activity",
-             "X2" = "Sodium\n Intake",
-             "Y" = "Blood\n Pressure")
-  )
+  coords = coord_dag)
 
-ggdag(our_dag, use_labels = "label") + theme_void()
+ggdag(our_dag) +
+  annotate("text", x = -1, y = 1.25, label = "Sodium Intake") +
+  annotate("text", x = -1, y = -1.25, label = "Physical Activity") +
+  annotate("text", x = 2, y = -0.25, label = "Blood Pressure") +
+  theme_void()
 ```
 
-## The question
+## The question 
 
 ::: {style="height: 1em;"}
 :::
 
-Instead of asking:
+Instead of sking:
 
 > “Do people who exercise more have lower blood pressure?”
 
 ::: {style="height: 1em;"}
 :::
 
-We ask:
+With a covariate, we ask:
 
 > “Is exercise associated with blood pressure after accounting for differences in sodium intake?”
 
@@ -277,10 +277,13 @@ We ask:
 
 set.seed(1234)
 
+# Set causal effect of exercise on blood pressure
+causal_effect = -1.7 
+
 # Simulate data
 data <- data.frame(sodium_intake = rnorm(200, 10, 2),
                    exercise = rnorm(200, 3, 3)) |>
-  mutate(blood_pressure = 7 + 1 * sodium_intake + -1.7 * exercise + rnorm(200, 0, 3))
+  mutate(blood_pressure = 7 + 1 * sodium_intake + causal_effect * exercise + rnorm(200, 0, 3))
 
 # Display first 8 rows, round to 2 decimals
 head(data, 8) |> 
@@ -288,7 +291,35 @@ head(data, 8) |>
   colformat_double(j = c(1:3), digits = 2)
 ```
 
-## Regression model
+## Regression model without covariate
+
+::: {style="height: 1em;"}
+:::
+
+```{r}
+#| echo: TRUE
+res <- lm(blood_pressure ~ exercise, data = data)
+```
+
+```{r}
+#| echo: FALSE
+res |>
+  tidy() |>
+  select(term, estimate, std.error, p.value) |>
+  flextable() |>
+  colformat_double(j = c(2, 4), digits = 2) |> 
+  colformat_double(j = c(2, 3), digits = 2) |> 
+  color(i = 2, color = "red", part = "body")
+```
+
+The simulated true causal effect of exercise on blood pressure is `r causal_effect`
+
+::: {style="height: 1em;"}
+:::
+
+The estimated effect of exercise on blood pressure is [`r round(res$coefficients[2], 2)`]{style="color:red;"}, which is [biased]{style="color:red;"} because its does not accurately reflect the true causal effect of exercise
+
+## Regression model with covariate
 
 ::: {style="height: 1em;"}
 :::
@@ -309,6 +340,9 @@ res |>
   color(i = 2, color = "blue", part = "body") |> 
   color(i = 3, color = green, part = "body")
 ```
+
+The estimated effect of exercise on blood pressure is [`r round(res$coefficients[2], 2)`]{.green}, which is [more accurate]{.green} and closer to the true causal effect of `r causal_effect`
+
 
 ## Interpreting the predictors
 
@@ -402,14 +436,14 @@ coord_dag <- list(
 our_dag <- dagify(M ~ X,
                   Y ~ M,
                   Y ~ X,
-                  coords = coord_dag,
-                  labels = c("M" = "Sodium\n intake ", 
-                             "X" = "Heavy alcohol",
-                             "Y" = "Blood pressure")
+                  coords = coord_dag
                   )
 
-ggdag(our_dag, 
-      use_labels = "label") + theme_void()
+ggdag(our_dag) +
+  annotate("text", x = 1, y = 1.25, label = "Sodium\n intake ") +
+  annotate("text", x = 0, y = -0.25, label = "Heavy alcohol") +
+  annotate("text", x = 2, y = -0.25, label = "Blood pressure") +
+  theme_void()
 ```
 
 ## Direct, Indirect and Total Effects
@@ -476,7 +510,11 @@ res |>
   color(i = 2, color = green, part = "body")
 ```
 
-This model estimates the total effect of the [exposure]{.green}.
+This model estimates the total effect of the
+[exposure]{.green}.
+
+::: {style="height: 1em;"}
+:::
 
 The total effect is the effect of interest when estimating the overall effect of an exposure or intervention.
 
@@ -503,7 +541,10 @@ res |>
 
 [Exposure]{style="color:red;"} corresponds to the direct effect (i.e., the effect of $X$ on $Y$ **not through M**).
 
-Adjusting for the mediator blocks the pathway $X$ → $M$ → $Y$, so the model no longer estimates the total effect of $X$ on $Y$
+::: {style="height: 1em;"}
+:::
+
+Adjusting for the mediator blocks the pathway $X$ → $M$ → $Y$, so the model no longer estimates the total effect of $X$ on $Y$ 
 
 ## Confounder
 
@@ -527,14 +568,14 @@ coord_dag <- list(
 our_dag <- dagify(X ~ C, 
                   Y ~ X, 
                   Y ~ C, 
-                  coords = coord_dag,
-                  labels = c("C" = "SEP*", 
-                             "X" = "Heavy\n alcohol",
-                             "Y" = "Blood\n pressure")
+                  coords = coord_dag
                   )
 
-ggdag(our_dag,
-      use_labels = "label") + theme_void()
+ggdag(our_dag) +
+  annotate("text", x = 1, y = 1.25, label = "SEP*") +
+  annotate("text", x = 0, y = -0.25, label = "Heavy alcohol") +
+  annotate("text", x = 2, y = -0.25, label = "Blood pressure") +
+  theme_void()
 ```
 
 \*SEP = socio-economic position
@@ -549,13 +590,16 @@ ggdag(our_dag,
 
 set.seed(1234)
 
+# Set causal effect
+causal_effect = 0.5
+
 # Simulate data
 data <- data.frame(
   confounder = sample(0:1, 100, replace = TRUE)
 ) |>
     mutate(
     exposure = runif(100, 0, 1) + 0.3 * confounder,
-    outcome = 2.0 + 0.5 * exposure + 0.25 * confounder
+    outcome = 2.0 + causal_effect * exposure + 0.25 * confounder
   )
 
 # Display first 8 rows, rounded to 2 decimals
@@ -584,7 +628,13 @@ res |>
   color(i = 2, color = "red", part = "body")
 ```
 
-Without adjusting for the confounder, the estimated effect of [exposure is biased]{style="color:red;"}
+The simulated true causal effect is [`r causal_effect`]{.green}.
+
+::: {style="height: 1em;"}
+:::
+
+Without adjusting for the confounder, the estimated effect of
+exposure is [`r round(res$coefficients[2], 2)`]{style="color:red;"}, which represents a [biased]{style="color:red;"} estimate of the true causal effect
 
 ## Adjusting for the confounder
 
@@ -606,7 +656,9 @@ res |>
   color(i = 2, color = green, part = "body")
 ```
 
-Adjusting for the confounder results in an [unbiased]{.green} estimate of effect of the [exposure]{.green}.
+Adjusting for the confounder results in an estimate of
+[`r round(res$coefficients[2], 2)`]{.green} which is an [unbiased]{.green}
+estimate of the true effect of the exposure ([`r causal_effect`]{.green})
 
 ## Collider
 
@@ -642,8 +694,10 @@ our_dag <- dagify(C ~ X,
                              "Y" = "Mortality")
 )
 
-ggdag(our_dag,
-      use_labels = "label") + 
+ggdag(our_dag) +
+  annotate("text", x = 1, y = 1.25, label = "CVD*") +
+  annotate("text", x = 0, y = -0.25, label = "Obesity") +
+  annotate("text", x = 2, y = -0.25, label = "Mortality") +
   theme_void()
 ```
 
@@ -779,12 +833,7 @@ coord_dag <- list(
 our_dag <- dagify(
   C ~ X + Y,
   Y ~ X,
-  coords = coord_dag,
-  labels = c(
-    C = "University enrollment",
-    X = "Sport ability",
-    Y = "Academic ability"
-  )
+  coords = coord_dag
 )
 
 ggdag(our_dag) +
@@ -841,7 +890,7 @@ ggplot(data, aes(exposure, outcome)) +
   theme_classic()
 ```
 
-Conditioning on university enrollment creates a spurious association between sports ability and academic ability
+Conditioning on university enrollment creates [a spurious association]{style="color:red;"} between sports ability and academic ability
 
 ## Examples of bad controls in applied research
 
@@ -862,7 +911,7 @@ Conditioning on university enrollment creates a spurious association between spo
 ::: callout-tip
 - **Start with the research question** — what effect or association are you trying to estimate?
 
-- **Adjust for relevant good controls (i.e., confounders)**
+- **Adjust for relevant good controls (i.e., covariates and confounders)**
 
 - Avoid bad controls:
 
