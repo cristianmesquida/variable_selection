@@ -551,11 +551,11 @@ set.seed(1234)
 
 # Simulate data
 data <- data.frame(
-  covariate = sample(0:1, 100, replace = TRUE)
+  confounder = sample(0:1, 100, replace = TRUE)
 ) |>
     mutate(
-    exposure = runif(100, 0, 1) + 0.3 * covariate,
-    outcome = 2.0 + 0.5 * exposure + 0.25 * covariate
+    exposure = runif(100, 0, 1) + 0.3 * confounder,
+    outcome = 2.0 + 0.5 * exposure + 0.25 * confounder
   )
 
 # Display first 8 rows, rounded to 2 decimals
@@ -593,7 +593,7 @@ Without adjusting for the confounder, the estimated effect of [exposure is biase
 
 ```{r}
 #| echo: TRUE
-res <- lm(outcome ~ exposure + covariate, data)
+res <- lm(outcome ~ exposure + confounder, data)
 ```
 
 ```{r}
