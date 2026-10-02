@@ -34,6 +34,18 @@ set_flextable_defaults(
 )
 ```
 
+## Lecture materials
+
+::: {style="height: 1em;"}
+:::
+
+Slides and exercises available are available here:
+
+::: {style="height: 1em;"}
+:::
+
+<https://github.com/cristianmesquida/variable_selection>
+
 ## Lecture's objectives
 
 ::: {style="height: 1em;"}
