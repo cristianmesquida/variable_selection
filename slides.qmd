@@ -5,6 +5,7 @@ institute: "Eindhoven University of Technology"
 author: "Cristian Mesquida"
 date: today
 format: revealjs
+theme: simple
 slide-number: true
 bibliography: references.bib
 nocite: |
@@ -95,6 +96,9 @@ The answer is that it depends on your **research question**
 
 ## Causal questions
 
+::: {style="height: 1em;"}
+:::
+
 - Aims to answer a **well-defined, pre-specified question**: *“Does heavy sodium intake increase blood pressure?”*
 
 - Focus on estimating the causal effect of an an intervention/exposure on an outcome
@@ -102,6 +106,9 @@ The answer is that it depends on your **research question**
 - Variables should be selected based on causal assumptions, theory, and prior evidence
 
 ## Causal questions
+
+::: {style="height: 1em;"}
+:::
 
 - Causal questions can be studied using **randomised controlled trials** (RCTs) or **observational studies**
 
@@ -112,6 +119,9 @@ The answer is that it depends on your **research question**
 - Regression analysis can be used to adjust for measured confounders by including them as covariates in the model
 
 ## A side note on **observational studies**
+
+::: {style="height: 1em;"}
+:::
 
 - Observational studies are based on data collected without any intervention or manipulation by the researcher
 
@@ -131,6 +141,9 @@ The answer is that it depends on your **research question**
 
 ## Exploratory / associational questions
 
+::: {style="height: 1em;"}
+:::
+
 - Does not have a **specific pre-specified hypothesis**
 
 - Research questions often use wording such as:*“What factors are associated with mortality?”*
@@ -140,6 +153,9 @@ The answer is that it depends on your **research question**
 - Based on observational studies so there is risk of confounding
 
 ## Prediction questions
+
+::: {style="height: 1em;"}
+:::
 
 - Asks: “*How accurately can we predict blood pressure in the sedentary population?*”
 
@@ -151,6 +167,9 @@ The answer is that it depends on your **research question**
 
 ## Directed Acyclic Graph (DAG)
 
+::: {style="height: 1em;"}
+:::
+
 - DAGs consist of **variables (nodes)** and **arrows (edges)**
 
 - Nodes can represent interventions, exposures, outcomes, or other characteristics
@@ -158,6 +177,9 @@ The answer is that it depends on your **research question**
 - Arrows represent **known or hypothesised causal relationships** between variables
 
 ## Directed Acyclic Graph (DAG)
+
+::: {style="height: 1em;"}
+:::
 
 DAGs depict an investigator’s hypotheses or assumptions about:
 
@@ -169,6 +191,9 @@ DAGs depict an investigator’s hypotheses or assumptions about:
 
 ## Types of variables
 
+::: {style="height: 1em;"}
+:::
+
 When deciding which variables to include in a regression model, it is important to distinguish between:
 
 - **Predictors**
@@ -179,9 +204,10 @@ When deciding which variables to include in a regression model, it is important 
 
 - **Colliders**
 
-These variables have very different implications for statistical adjustment.
-
 ## Predictors
+
+::: {style="height: 1em;"}
+:::
 
 - A predictor ($X$) is a variable included in the model to explain the outcome ($Y$)
 
@@ -191,6 +217,9 @@ These variables have very different implications for statistical adjustment.
   - Covariates: other characteristics that may influence the outcome (e.g., age, sex, socio-economic position, etc.)
 
 ## Predictors in a DAG
+
+::: {style="height: 1em;"}
+:::
 
 ```{r}
 coord_dag <- list(
@@ -211,6 +240,9 @@ ggdag(our_dag, use_labels = "label") + theme_void()
 ```
 
 ## The question
+
+::: {style="height: 1em;"}
+:::
 
 Instead of asking:
 
@@ -332,6 +364,9 @@ res2
 - Increase the statistical precision of the estimated effect of exposure (i.e., smaller standard error and more precise CI) and increase statistical power
 
 ## Mediator
+
+::: {style="height: 1em;"}
+:::
 
 A **mediator** is a variable that:
 
@@ -460,6 +495,9 @@ Adjusting for the mediator blocks the pathway $X$ → $M$ → $Y$, so the model 
 
 ## Confounder
 
+::: {style="height: 1em;"}
+:::
+
 A **confounder** is a variable that:
 
 - is associated with the exposure ($X$)
@@ -559,6 +597,9 @@ res |>
 Adjusting for the confounder results in an [unbiased]{.green} estimate of effect of the [exposure]{.green}.
 
 ## Collider
+
+::: {style="height: 1em;"}
+:::
 
 A **collider** is a variable that:
 
