@@ -26,6 +26,8 @@ library(flextable)
 ```{r setup}
 #| include: false
 
+green <- "#228B22"
+
 set_flextable_defaults(
   font.size = 20
 )
@@ -33,15 +35,20 @@ set_flextable_defaults(
 
 ## Lecture's objectives
 
+::: {style="height: 1em;"}
+:::
+
 By the end of this lecture, you should be able to:
 
 - Identify the type of research question (causal, associational or prediction)
 
 - Identify the type of variables (predictors, mediators, confounders and colliders)
 
-- Be familiar with Directed Acyclical Graphs (DAGs) and how they can help identify potential confounders and avoid inappropriate adjustment for mediators and colliders
+- Be familiar with Directed Acyclical Graphs (DAGs)
 
-## First
+- Know how to use DAGs to identify potential confounders and avoid inappropriate adjustment for bad controls
+
+## The difficulty
 
 ```{r}
 nhefs <- readr::read_csv(
@@ -50,13 +57,13 @@ nhefs <- readr::read_csv(
 )
 ```
 
-- Suppose we are researchers working for the Ministry of Health
+- Suppose we work for the Ministry of Health
 
-- We want to investigate the predictors of blood pressure (`sbp`)
+- Our goal is to investigate what factors affect blood pressure (`sbp`)
 
-- We use the [`nhefs`](https://vincentarelbundock.github.io/Rdatasets/articles/data.html) dataset, which contains [survey data](https://wwwn.cdc.gov/Nchs/Nhanes/nhefs/default.aspx) from US population
+- The [`nhefs`](https://vincentarelbundock.github.io/Rdatasets/articles/data.html) dataset contains [survey data](https://wwwn.cdc.gov/Nchs/Nhanes/nhefs/default.aspx) from US population
 
-- Which variables predict systolic blood pressure (`sbp`)?
+- Which factors affect systolic blood pressure (`sbp`)?
 
 ::: scrollable
 ```{r}
@@ -69,12 +76,15 @@ nhefs |>
 
 ## What variables to include in the model?
 
+::: {style="height: 1em;"}
+:::
+
 ::: {.fragment .fade-in-then-out}
 **Not** based on whether *p* \< 0.05!
 
 Selecting variables based solely on statistical significance is **a mindless approach** and should be avoided
 
-It can increase the number of false positives (Type I error rate)
+[It can increase the number of false positives (Type I error rate)]{style="color:red"}
 :::
 
 ::: {.fragment .fade-up}
@@ -202,11 +212,21 @@ ggdag(our_dag, use_labels = "label") + theme_void()
 
 ## The question
 
-Instead of simply asking: “Do people who exercise more have lower blood pressure?”
+Instead of asking:
 
-we ask: “Is exercise associated with blood pressure after accounting for differences in sodium intake?”
+> “Do people who exercise more have lower blood pressure?”
+
+::: {style="height: 1em;"}
+:::
+
+We ask:
+
+> “Is exercise associated with blood pressure after accounting for differences in sodium intake?”
 
 ## Simulated example of predictors
+
+::: {style="height: 1em;"}
+:::
 
 ```{r}
 #| echo: FALSE
@@ -226,6 +246,9 @@ head(data, 8) |>
 
 ## Regression model
 
+::: {style="height: 1em;"}
+:::
+
 ```{r}
 #| echo: TRUE
 res <- lm(blood_pressure ~ exercise + sodium_intake, data = data)
@@ -240,16 +263,22 @@ res |>
   colformat_double(j = c(2, 4), digits = 2) |> 
   colformat_double(j = c(2, 3), digits = 2) |> 
   color(i = 2, color = "blue", part = "body") |> 
-  color(i = 3, color = "green", part = "body")
+  color(i = 3, color = green, part = "body")
 ```
 
 ## Interpreting the predictors
+
+::: {style="height: 1em;"}
+:::
 
 > **Sodium intake:** Holding `exercise` constant, a one-unit increase in sodium is associated with a **`r round(res$coefficients[2], 2)`-unit decrease in blood pressure**\*
 
 > **Exercise:** Holding `sodium_intake` constant, a one-unit increase in `exercise` is associated with a **`r round(res$coefficients[3], 2)`-unit increase in blood pressure**
 
-## Including a covariate increase precision
+## Including a covariate increases precision
+
+::: {style="height: 1em;"}
+:::
 
 ```{r}
 #| echo: FALSE
@@ -260,7 +289,7 @@ res <- lm(blood_pressure ~ exercise + sodium_intake, data = data) |>
   flextable() |>
   colformat_double(j = c(2, 4), digits = 2) |> 
   colformat_double(j = c(2, 3), digits = 2) |> 
-  color(i = 2, j = c(3), color = "green", part = "body")
+  color(i = 2, j = c(3), color = green, part = "body")
   
 
 res2 <- lm(blood_pressure ~ exercise, data = data) |> 
@@ -292,7 +321,13 @@ res2
 
 ## Why to include a covariate?
 
+::: {style="height: 1em;"}
+:::
+
 - Control for differences in the covariate that can contribute to the observed association
+
+::: {style="height: 1em;"}
+:::
 
 - Increase the statistical precision of the estimated effect of exposure (i.e., smaller standard error and more precise CI) and increase statistical power
 
@@ -322,8 +357,8 @@ our_dag <- dagify(M ~ X,
                   Y ~ X,
                   coords = coord_dag,
                   labels = c("M" = "Sodium\n intake ", 
-                             "X" = "Heavy\n alcohol",
-                             "Y" = "Blood\n pressure")
+                             "X" = "Heavy alcohol",
+                             "Y" = "Blood pressure")
                   )
 
 ggdag(our_dag, 
@@ -331,6 +366,9 @@ ggdag(our_dag,
 ```
 
 ## Direct, Indirect and Total Effects
+
+::: {style="height: 1em;"}
+:::
 
 **Direct effect**
 
@@ -347,6 +385,9 @@ The overall effect of $X$ on $Y$, combining the direct and indirect effects:
 - Total effect = Direct effect + Indirect effect
 
 ## Simulated example of a mediator
+
+::: {style="height: 1em;"}
+:::
 
 ```{r}
 #| echo: FALSE
@@ -370,6 +411,9 @@ head(data, 8) |>
 
 ## Without adjusting for the mediator
 
+::: {style="height: 1em;"}
+:::
+
 ```{r}
 #| echo: TRUE
 res <- lm(outcome ~ exposure, data = data) 
@@ -382,14 +426,17 @@ res |>
   select(term, estimate, p.value) |> 
   flextable() |> 
   colformat_double(j = c(2, 3), digits = 2) |> 
-  color(i = 2, color = "green", part = "body")
+  color(i = 2, color = green, part = "body")
 ```
 
-This model estimates the total effect of the [exposure]{style="color:green;"}.
+This model estimates the total effect of the [exposure]{.green}.
 
 The total effect is the effect of interest when estimating the overall effect of an exposure or intervention.
 
 ## Adjusting for the mediator
+
+::: {style="height: 1em;"}
+:::
 
 ```{r}
 #| echo: TRUE
@@ -407,7 +454,7 @@ res |>
   color(i = 2, color = "red", part = "body")
 ```
 
-[exposure]{style="color:red;"} corresponds to the direct effect (i.e., the effect of $X$ on $Y$ **not through M**).
+[Exposure]{style="color:red;"} corresponds to the direct effect (i.e., the effect of $X$ on $Y$ **not through M**).
 
 Adjusting for the mediator blocks the pathway $X$ → $M$ → $Y$, so the model no longer estimates the total effect of $X$ on $Y$
 
@@ -444,6 +491,9 @@ ggdag(our_dag,
 
 ## Confounding in practice
 
+::: {style="height: 1em;"}
+:::
+
 ```{r}
 #| echo: FALSE
 
@@ -466,6 +516,9 @@ head(data, 8) |>
 
 ## Without adjusting for the confounder
 
+::: {style="height: 1em;"}
+:::
+
 ```{r}
 #| echo: TRUE
 res <- lm(outcome ~ exposure, data) 
@@ -481,25 +534,29 @@ res |>
   color(i = 2, color = "red", part = "body")
 ```
 
-Without adjusting for the confounder, the estimated effect of [exposure]{style="color:red;"} is biased
+Without adjusting for the confounder, the estimated effect of [exposure is biased]{style="color:red;"}
 
 ## Adjusting for the confounder
 
+::: {style="height: 1em;"}
+:::
+
 ```{r}
-#| echo: FALSE
+#| echo: TRUE
 res <- lm(outcome ~ exposure + covariate, data)
 ```
 
 ```{r}
+#| echo: FALSE
 res |> 
   tidy() |> 
   select(term, estimate, p.value) |> 
   flextable() |> 
   colformat_double(j = c(2, 3), digits = 2) |> 
-  color(i = 2, color = "green", part = "body")
+  color(i = 2, color = green, part = "body")
 ```
 
-Adjusting for the confounder results in an unbiased estimate of effect of the [exposure]{style="color:green;"}
+Adjusting for the confounder results in an [unbiased]{.green} estimate of effect of the [exposure]{.green}.
 
 ## Collider
 
@@ -541,6 +598,9 @@ ggdag(our_dag,
 
 ## Simulated example of collider bias
 
+::: {style="height: 1em;"}
+:::
+
 ```{r}
 #| echo: FALSE
 
@@ -576,6 +636,9 @@ ggplot(data, aes(x = exposure, y = outcome)) +
 
 ## Without adjusting for the collider
 
+::: {style="height: 1em;"}
+:::
+
 ```{r}
 #| echo: TRUE
 res <- lm(outcome ~ exposure, data)
@@ -583,15 +646,16 @@ res <- lm(outcome ~ exposure, data)
 
 ```{r}
 #| echo: FALSE
+
 res |> 
   tidy() |> 
   select(term, estimate, p.value) |> 
   flextable() |> 
   colformat_double(j = c(2, 3), digits = 2) |> 
-  color(i = 2, color = "green", part = "body")
+  color(i = 2, color = green, part = "body")
 ```
 
-[No causal association]{style="color:green;"} between [exposure]{style="color:green;"} and outcome
+[No causal association]{.green} between exposure and outcome
 
 ## Conditioning on a collider through sampling
 
@@ -606,6 +670,9 @@ data |>
 ```
 
 ## Adjusting for the collider
+
+::: {style="height: 1em;"}
+:::
 
 ```{r}
 #| echo: TRUE
@@ -636,14 +703,17 @@ Adjusting for the collider creates [a spurious association]{style="color:red;"} 
 
 ## The Obesity Paradox
 
+::: {style="height: 1em;"}
+:::
+
 | **Analysis** | **Risk Difference (95% CI)** |
 |:--------------------------------|:--------------------------------------|
-| [Crude (mortality \~ obesity + confounders)]{style="color:green"} | [0.05 (0.03, 0.07)]{style="color:green"} |
+| [mortality \~ obesity + confounders]{style="color:green"} | [0.05 (0.03, 0.07)]{style="color:green"} |
 | Adjusted — total population | 0.03 (0.02, 0.05) |
-| [Adjusted — CVD (mortality \~ obesity + CVD + confounders)]{style="color:red"} | [−0.12 (−0.20, −0.04)]{style="color:red"} |
+| [mortality \~ obesity + CVD + confounders]{style="color:red"} | [−0.12 (−0.20, −0.04)]{style="color:red"} |
 | Adjusted — No CVD | 0.03 (0.01, 0.05) |
 
-: Comparison of the estimated risk difference for the effect of obesity on mortality. Results obtained from @obesity_paradox2015
+: Estimated risk difference for the effect of obesity on mortality. Results from @obesity_paradox2015
 
 ## Another example of collider bias
 
@@ -672,6 +742,9 @@ ggdag(our_dag) +
 ```
 
 ## Conditioning on a collider through sampling
+
+::: {style="height: 1em;"}
+:::
 
 ```{r}
 data <- data.frame(
@@ -715,9 +788,12 @@ ggplot(data, aes(exposure, outcome)) +
   theme_classic()
 ```
 
-Conditioning on the collider (i.e., university enrollment) creates a spurious association between sports ability and academic ability
+Conditioning on university enrollment creates a spurious association between sports ability and academic ability
 
 ## Examples of bad controls in applied research
+
+::: {style="height: 1em;"}
+:::
 
 - Risk factors of COVID-19 [@griffith2020]
 
@@ -725,16 +801,26 @@ Conditioning on the collider (i.e., university enrollment) creates a spurious as
 
 - Multigenerational mobility [@breen2018]
 
-## Recipe for an appropriate regression model
+## Recipe for an appropriate analysis
 
+::: {style="height: 1em;"}
+:::
+
+::: callout-tip
 - **Start with the research question** — what effect or association are you trying to estimate?
 
-- **Adjust for relevant measured confounders** that are common causes of the exposure and outcome
+- **Adjust for relevant good controls (i.e., confounders)**
 
-- **For the total effect of an intervention/exposure, do not adjust for mediators** that lie on the causal pathway
+- Avoid bad controls:
 
-- **Do not condition on colliders**, either through sampling/selection or regression adjustment
+  - **Do not adjust for mediators** that lie on the causal pathway to estimate the total effect of an intervention
+
+  - **Do not condition on colliders** either through sampling/selection or regression adjustment
+:::
 
 ## Further reading and references
+
+::: {style="height: 1em;"}
+:::
 
 Further reading includes @tutorial_dag2022 and @lewer_2025
